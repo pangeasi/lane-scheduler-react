@@ -18,10 +18,21 @@ A flexible, drag-and-drop scheduler component for React with full TypeScript sup
 npm install @pangeasi/lane-scheduler-react
 ```
 
+## Styles
+
+The library comes with pre-built CSS that includes all necessary Tailwind styles. You need to import it in your application:
+
+```tsx
+import "@pangeasi/lane-scheduler-react/styles.css";
+```
+
+The CSS file is self-contained and includes only the Tailwind utilities used by the components (~15KB gzipped).
+
 ## Basic Usage
 
 ```tsx
 import { Scheduler, Lane } from "@pangeasi/lane-scheduler-react";
+import "@pangeasi/lane-scheduler-react/styles.css";
 
 function App() {
   const [appointments, setAppointments] = useState([

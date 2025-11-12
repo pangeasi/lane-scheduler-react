@@ -3,9 +3,9 @@
 ## Installation
 
 ```bash
-npm install @ypangeasi/lane-scheduler-react
+npm install @pangeasi/lane-scheduler-react
 # or
-yarn add @ypangeasi/lane-scheduler-react
+yarn add @pangeasi/lane-scheduler-react
 ```
 
 ## Peer Dependencies
@@ -20,8 +20,9 @@ npm install react react-dom
 
 ```tsx
 import React, { useState } from "react";
-import { Scheduler, Lane } from "@ypangeasi/lane-scheduler-react";
-import type { Appointment } from "@ypangeasi/lane-scheduler-react";
+import { Scheduler, Lane } from "@pangeasi/lane-scheduler-react";
+import "@pangeasi/lane-scheduler-react/styles.css";
+import type { Appointment } from "@pangeasi/lane-scheduler-react";
 
 function MyScheduler() {
   const [appointments, setAppointments] = useState<Appointment[]>([
@@ -125,9 +126,7 @@ import type {
   LaneConfig,
   LaneProps,
   SchedulerProps,
-} from "@ypangeasi/lane-scheduler-react";
-
-// Your strongly typed components
+} from "@pangeasi/lane-scheduler-react"; // Your strongly typed components
 const MyComponent: React.FC<{
   appointments: Appointment[];
   config: LaneConfig;

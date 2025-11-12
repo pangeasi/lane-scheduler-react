@@ -21,6 +21,7 @@
       "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs.js"
     },
+    "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
   },
   "keywords": [

@@ -20,8 +20,15 @@ export default defineConfig({
           react: "React",
           "react-dom": "ReactDOM",
         },
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.endsWith(".css")) {
+            return "styles.css";
+          }
+          return assetInfo.name || "";
+        },
       },
     },
+    cssCodeSplit: false, // Generar un solo archivo CSS
     sourcemap: true,
     minify: false,
     emptyOutDir: false, // No limpiar dist para preservar archivos .d.ts

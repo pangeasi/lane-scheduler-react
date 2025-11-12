@@ -1,3 +1,6 @@
+// Import styles
+import "./index.css";
+
 export { Lane, Scheduler } from "./components";
 export type {
   Appointment,
