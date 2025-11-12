@@ -43,6 +43,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "preview:demo": "vite preview --config vite.demo.config.ts",
+    "deploy:demo": "npm run build:demo && git add docs/ && git commit -m 'Deploy demo' && git push origin main",
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
