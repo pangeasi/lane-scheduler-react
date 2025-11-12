@@ -32,6 +32,8 @@
         "src/**/*.spec.*",
         "**/__tests__/**",
         "src/Demo.tsx",
-        "src/main.tsx"
+        "src/main.tsx",
+        "src/**/*.stories.*",
+        ".storybook/**"
     ]
 }
