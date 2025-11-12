@@ -2,9 +2,9 @@
 
 A flexible, drag-and-drop scheduler component for React with full TypeScript support.
 
-## 🚀 [Live Demo](https://pangeasi.github.io/lane-scheduler-react/)
+## � [Interactive Documentation](https://pangeasi.github.io/lane-scheduler-react/)
 
-Try the interactive demo to see all features in action!
+Explore the complete Storybook documentation with interactive examples, API reference, and usage guides!
 
 ## Features
 

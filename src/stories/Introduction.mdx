@@ -1,0 +1,115 @@
+# Lane Scheduler React
+
+A flexible, drag-and-drop scheduler component library for React with full TypeScript support.
+
+## Overview
+
+Lane Scheduler React provides a powerful and flexible scheduling interface that allows users to:
+
+- **Drag & Drop** appointments within and between lanes
+- **Resize** appointments by dragging their edges
+- **Block** specific time slots
+- **Lock** appointments to prevent modification
+- **Customize** rendering with render props
+- **Handle** touch events for mobile support
+
+## Core Concepts
+
+### Scheduler
+
+The `Scheduler` component provides the context for drag & drop operations. It coordinates state between multiple lanes and handles cross-lane appointment movements.
+
+### Lane
+
+The `Lane` component represents a single scheduling timeline. Each lane can contain multiple appointments and has its own blocked slots and configuration.
+
+### Appointments
+
+Appointments are the schedulable items that can be moved and resized. They have properties like:
+
+- `startSlot` - The starting time slot
+- `duration` - How many slots the appointment spans
+- `title` - Display text
+- `locked` - Whether the appointment can be modified
+- `allowOverlap` - Whether appointments can overlap
+- `onBlockedSlot` - Custom logic for blocked slot handling
+
+## Key Features
+
+### 🎯 Drag & Drop
+
+- Move appointments within lanes or between different lanes
+- Visual feedback during dragging
+- Snap to slot boundaries
+- Invalid position indicators
+
+### 📏 Resizable Appointments
+
+- Resize from start or end edges
+- Minimum duration constraints
+- Overlap detection and prevention
+- Visual resize handles
+
+### 🔒 Blocked Slots
+
+- Define unavailable time periods
+- Custom logic with `onBlockedSlot` callback
+- Visual indicators for blocked times
+- VIP appointments can override blocks
+
+### 🎨 Customizable Rendering
+
+- `renderSlot` - Custom slot appearance and content
+- `renderAppointmentContent` - Custom appointment display
+- Flexible styling with CSS classes
+- Responsive design support
+
+### 📱 Mobile Support
+
+- Touch event handling
+- Responsive layouts
+- Mobile-optimized interactions
+- Viewport-aware controls
+
+## TypeScript Support
+
+The library is built with TypeScript and provides comprehensive type definitions for:
+
+- All component props and configurations
+- Appointment and lane data structures
+- Event handler signatures
+- Custom render function types
+
+## Architecture
+
+The library uses React Context to coordinate drag & drop state between components:
+
+```
+<Scheduler> (provides drag context)
+  └── <Lane> (individual timeline)
+      ├── Appointments (draggable/resizable)
+      └── Time Slots (clickable/droppable)
+```
+
+This architecture allows for:
+
+- Clean separation of concerns
+- Efficient state management
+- Easy composition of multiple lanes
+- Extensible functionality
+
+## Browser Support
+
+- Modern browsers with ES2018+ support
+- Touch devices (iOS Safari, Android Chrome)
+- Desktop browsers (Chrome, Firefox, Safari, Edge)
+- React 18+ required
+
+## Performance
+
+The library is optimized for performance with:
+
+- Efficient re-rendering using React hooks
+- Minimal DOM updates during drag operations
+- Debounced event handlers
+- Lazy calculation of overlap detection
