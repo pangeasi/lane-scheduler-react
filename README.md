@@ -2,6 +2,10 @@
 
 A flexible, drag-and-drop scheduler component for React with full TypeScript support.
 
+## 🚀 [Live Demo](https://pangeasi.github.io/lane-scheduler-react/)
+
+Try the interactive demo to see all features in action!
+
 ## Features
 
 - 🎯 **Drag & Drop** - Move appointments between lanes with smooth animations

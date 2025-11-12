@@ -11,31 +11,31 @@ interface LaneData {
 }
 
 const Demo: React.FC = () => {
-  const [totalSlotsCount, setTotalSlotsCount] = useState(48); // 48 slots = 24 horas con slots de 30min
+  const [totalSlotsCount, setTotalSlotsCount] = useState(48); // 48 slots = 24 hours with 30min slots
   const [lanes, setLanes] = useState<LaneData[]>([
     {
       id: "lane1",
-      name: "Sala 1",
+      name: "Room 1",
       appointments: [
         {
           id: "apt1",
           startSlot: 4,
           duration: 6,
-          title: "Cita A (3h)",
+          title: "Appointment A (3h)",
           allowOverlap: false,
         },
         {
           id: "apt2",
           startSlot: 12,
           duration: 4,
-          title: "Cita B (2h)",
+          title: "Appointment B (2h)",
           allowOverlap: true,
         },
         {
           id: "apt3",
           startSlot: 20,
           duration: 8,
-          title: "Cita C Bloqueada",
+          title: "Blocked Appointment C",
           locked: true,
         },
       ],
@@ -43,24 +43,24 @@ const Demo: React.FC = () => {
     },
     {
       id: "lane2",
-      name: "Sala 2",
+      name: "Room 2",
       appointments: [
         {
           id: "apt4",
           startSlot: 6,
           duration: 4,
-          title: "Cita D",
+          title: "Appointment D",
           allowOverlap: false,
         },
         {
           id: "apt5",
           startSlot: 14,
           duration: 6,
-          title: "Cita VIP (puede slots bloq.)",
+          title: "VIP Appointment (can use blocked slots)",
           allowOverlap: false,
           onBlockedSlot: (slotIndex, laneId) => {
             console.log(
-              `Cita VIP sobre slot bloqueado ${slotIndex} en ${laneId}`
+              `VIP Appointment on blocked slot ${slotIndex} in ${laneId}`
             );
             return true;
           },
@@ -70,7 +70,7 @@ const Demo: React.FC = () => {
     },
     {
       id: "lane3",
-      name: "Sala 3",
+      name: "Room 3",
       appointments: [],
       blockedSlots: [2, 4, 30],
     },
@@ -102,7 +102,7 @@ const Demo: React.FC = () => {
     newStartSlot: number
   ) => {
     setLanes((prev) => {
-      // Si es la misma lane, solo actualizamos la posición
+      // If it's the same lane, just update the position
       if (sourceLaneId === targetLaneId) {
         return prev.map((lane) => {
           if (lane.id === sourceLaneId) {
@@ -119,9 +119,9 @@ const Demo: React.FC = () => {
         });
       }
 
-      // Si es diferente lane, quitamos de origen y añadimos a destino
+      // If it's a different lane, remove from source and add to destination
       return prev.map((lane) => {
-        // Quitar de la lane origen
+        // Remove from source lane
         if (lane.id === sourceLaneId) {
           return {
             ...lane,
@@ -130,7 +130,7 @@ const Demo: React.FC = () => {
             ),
           };
         }
-        // Añadir a la lane destino
+        // Add to destination lane
         if (lane.id === targetLaneId) {
           return {
             ...lane,
@@ -150,7 +150,7 @@ const Demo: React.FC = () => {
       id: `apt${Date.now()}`,
       startSlot: slotIdx,
       duration: 2,
-      title: `Nueva ${slotIdx}`,
+      title: `New ${slotIdx}`,
       allowOverlap: false,
     };
 
@@ -163,7 +163,7 @@ const Demo: React.FC = () => {
     );
   };
 
-  // Función para renderizar slots agrupados (2 slots = 1 hora)
+  // Function to render grouped slots (2 slots = 1 hour)
   const renderSlotWithHourGroups = useCallback(
     (slotIdx: number, isBlocked: boolean) => {
       const isHourMark = slotIdx % 2 === 0;
@@ -199,16 +199,16 @@ const Demo: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Lane Scheduler</h1>
         <p className="text-gray-600 mb-4">
-          🎯 Arrastra citas entre lanes, redimensiónalas desde los bordes, o haz
-          doble click para crear nuevas
+          🎯 Drag appointments between lanes, resize them from the edges, or
+          double click to create new ones
         </p>
 
-        {/* Control de configuración */}
+        {/* Configuration control */}
         <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total de slots (cada slot = 30 minutos)
+                Total slots (each slot = 30 minutes)
               </label>
               <div className="flex items-center gap-4">
                 <input
@@ -227,8 +227,8 @@ const Demo: React.FC = () => {
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            💡 Los slots se renderizan con <code>renderSlot</code> mostrando
-            horas y medias horas agrupadas visualmente
+            💡 Slots are rendered with <code>renderSlot</code> showing hours and
+            half hours grouped visually
           </p>
         </div>
 
@@ -270,37 +270,35 @@ const Demo: React.FC = () => {
         </Scheduler>
 
         <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-semibold mb-2">Características:</h3>
+          <h3 className="font-semibold mb-2">Features:</h3>
           <ul className="text-sm space-y-1 text-gray-700">
-            <li>✓ Drag & drop entre lanes diferentes</li>
-            <li>✓ Redimensionar desde los extremos</li>
-            <li>✓ Snap a slots con feedback visual</li>
+            <li>✓ Drag & drop between different lanes</li>
+            <li>✓ Resize from the edges</li>
+            <li>✓ Snap to slots with visual feedback</li>
             <li>
-              ✓ <strong>renderSlot personalizable</strong> - En el demo: 2 slots
-              = 1 hora (cada slot = 30min)
+              ✓ <strong>Customizable renderSlot</strong> - In the demo: 2 slots
+              = 1 hour (each slot = 30min)
             </li>
+            <li>✓ Blocked slots (red) - normally don't allow appointments</li>
             <li>
-              ✓ Slots bloqueados (rojos) - normalmente no permiten appointments
+              ✓ <strong>onBlockedSlot</strong>: The "VIP Appointment" CAN go
+              over blocked slots
             </li>
-            <li>
-              ✓ <strong>onBlockedSlot</strong>: La "Cita VIP" SÍ puede ir sobre
-              slots bloqueados
-            </li>
-            <li>✓ Appointments bloqueados (con candado)</li>
-            <li>✓ Preview rojo cuando posición no válida</li>
-            <li>✓ Soporte touch para mobile</li>
-            <li>✓ Doble click para crear</li>
+            <li>✓ Locked appointments (with padlock)</li>
+            <li>✓ Red preview when position is not valid</li>
+            <li>✓ Touch support for mobile</li>
+            <li>✓ Double click to create</li>
           </ul>
 
           <div className="mt-3 p-3 bg-green-50 rounded border border-green-200">
             <p className="text-sm font-medium text-green-800">
-              🎨 Composición con renderSlot:
+              🎨 Composition with renderSlot:
             </p>
             <p className="text-xs text-green-700 mt-1">
-              La función <code>renderSlot</code> permite total flexibilidad
-              visual. En este demo, mostramos horas completas en negrita (0:00,
-              1:00...) y medias horas más sutiles (:30). Puedes personalizarlo
-              para mostrar lo que necesites: fechas, días, turnos, etc.
+              The <code>renderSlot</code> function allows total visual
+              flexibility. In this demo, we show full hours in bold (0:00,
+              1:00...) and half hours more subtly (:30). You can customize it to
+              show what you need: dates, days, shifts, etc.
             </p>
           </div>
         </div>
