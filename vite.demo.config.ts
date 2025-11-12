@@ -9,8 +9,10 @@ export default defineConfig({
   build: {
     outDir: "docs", // GitHub Pages usa 'docs' por defecto
     emptyOutDir: true,
+    assetsDir: "assets",
   },
   base: "/lane-scheduler-react/", // Cambia esto por el nombre real de tu repo
+  publicDir: "public", // Directorio para archivos estáticos
   define: {
     "process.env.NODE_ENV": '"production"',
   },
