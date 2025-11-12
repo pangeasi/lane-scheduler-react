@@ -2,6 +2,10 @@
   "name": "@pangeasi/lane-scheduler-react",
   "author": "pangeasi",
   "description": "Flexible drag-and-drop scheduler component for React",
+  "repository": {
+    "url": "https://github.com/pangeasi/lane-scheduler-react",
+    "type": "git"
+  },
   "private": false,
   "publishConfig": {
     "access": "public"
