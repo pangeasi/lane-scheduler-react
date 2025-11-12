@@ -8,9 +8,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+dist          # NPM library build output
 dist-ssr
 *.local
+
+# GitHub Pages demo build - committed for GitHub Pages
+# docs/
+dist
 
 # Editor directories and files
 .vscode/*
