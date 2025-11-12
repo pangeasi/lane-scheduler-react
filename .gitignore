@@ -13,7 +13,7 @@ dist-ssr
 *.local
 
 # GitHub Pages demo build - committed for GitHub Pages
-# docs/
+docs
 dist
 
 # Editor directories and files
