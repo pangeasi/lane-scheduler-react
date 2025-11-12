@@ -33,7 +33,7 @@ jobs:
       - name: Build Storybook
         run: |
           echo "Building Storybook for production..."
-          NODE_ENV=production npm run build:storybook
+          STORYBOOK_BASE_PATH=/lane-scheduler-react/ NODE_ENV=production npm run build:storybook
           echo "Creating .nojekyll file for GitHub Pages..."
           touch docs/.nojekyll
           echo "Build completed successfully!"

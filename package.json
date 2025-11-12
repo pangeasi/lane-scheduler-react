@@ -42,7 +42,7 @@
     "build": "npm run clean && tsc -p tsconfig.build.json && vite build",
     "build:types": "tsc -p tsconfig.build.json",
     "build:demo": "vite build --config vite.demo.config.ts",
-    "build:storybook": "storybook build --output-dir docs",
+    "build:storybook": "STORYBOOK_BASE_PATH=/lane-scheduler-react/ storybook build --output-dir docs",
     "clean": "rm -rf dist",
     "clean:demo": "rm -rf docs",
     "clean:storybook": "rm -rf docs",
