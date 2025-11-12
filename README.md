@@ -15,14 +15,13 @@ A flexible, drag-and-drop scheduler component for React with full TypeScript sup
 ## Installation
 
 ```bash
-npm install @your-username/lane-scheduler
+npm install @pangeasi/lane-scheduler-react
 ```
 
 ## Basic Usage
 
 ```tsx
-import { Scheduler, Lane } from "@your-username/lane-scheduler";
-import "@your-username/lane-scheduler/dist/style.css";
+import { Scheduler, Lane } from "@pangeasi/lane-scheduler-react";
 
 function App() {
   const [appointments, setAppointments] = useState([
@@ -122,7 +121,7 @@ import type {
   Appointment,
   LaneConfig,
   LaneProps,
-} from "@your-username/lane-scheduler";
+} from "@pangeasi/lane-scheduler";
 ```
 
 ## License
