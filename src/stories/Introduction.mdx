@@ -33,7 +33,7 @@ Appointments are the schedulable items that can be moved and resized. They have 
 - `duration` - How many slots the appointment spans
 - `title` - Display text
 - `locked` - Whether the appointment can be modified
-- `allowOverlap` - Whether appointments can overlap
+- `allowOverlap` - Whether OTHER appointments are allowed to overlap with this one (not whether this appointment can overlap with others)
 - `onBlockedSlot` - Custom logic for blocked slot handling
 
 ## Key Features
@@ -65,6 +65,14 @@ Appointments are the schedulable items that can be moved and resized. They have 
 - `renderAppointmentContent` - Custom appointment display
 - Flexible styling with CSS classes
 - Responsive design support
+
+### 🛡️ Overlap Control
+
+- Control overlap permissions through `allowOverlap` property
+- Appointments with `allowOverlap: true` allow others to overlap them
+- Appointments with `allowOverlap: false` (default) block all overlaps
+- Visual feedback: green preview when overlap is allowed, red when blocked
+- Any appointment trying to overlap must check ALL target appointments - all must allow it
 
 ### 📱 Mobile Support
 

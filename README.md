@@ -88,6 +88,18 @@ function App() {
 | `onSlotDoubleClick`        | `function`      | -        | Slot double-click handler             |
 | `onAppointmentChange`      | `function`      | -        | Appointment change handler            |
 
+### Appointment Properties
+
+| Property       | Type      | Description                                                                                              |
+| -------------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| `id`           | `string`  | Unique identifier                                                                                        |
+| `startSlot`    | `number`  | Starting slot index                                                                                      |
+| `duration`     | `number`  | Number of slots the appointment spans                                                                    |
+| `title`        | `string`  | Display text                                                                                             |
+| `locked`       | `boolean` | If true, prevents dragging and resizing                                                                  |
+| `allowOverlap` | `boolean` | If true, OTHER appointments are allowed to overlap with this one. Does NOT mean this can overlap others  |
+| `onBlockedSlot`| `function`| Custom logic to handle blocked slots (return true to allow placement)                                     |
+
 ## Advanced Usage
 
 ### Custom Slot Rendering
@@ -116,6 +128,35 @@ function App() {
 ```
 
 **Note**: The library doesn't impose any unit interpretation. You define what each slot represents through your custom rendering logic.
+
+### Blocking Overlaps with allowOverlap
+
+The `allowOverlap` property controls whether OTHER appointments can overlap with this appointment:
+
+```tsx
+// Appointments with allowOverlap: true allow others to be placed over them
+const flexibleAppointment = {
+  id: "1",
+  startSlot: 5,
+  duration: 2,
+  title: "Flexible Meeting",
+  allowOverlap: true, // Other appointments can overlap with this one
+};
+
+// Appointments without allowOverlap (default: false) block overlapping
+const strictAppointment = {
+  id: "2",
+  startSlot: 6,
+  duration: 2,
+  title: "Exclusive Meeting",
+  allowOverlap: false, // No other appointments can overlap with this one
+};
+
+// When dragging/resizing appointments:
+// - They can only overlap with appointments that have allowOverlap: true
+// - If they try to overlap with an appointment where allowOverlap: false,
+//   the drop/resize is rejected and shown in red
+```
 
 ### Blocked Slots with Custom Logic
 

@@ -19,12 +19,12 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Componente para el ejemplo del hook useAppointmentValidation
+ * Component for the useAppointmentValidation hook example
  */
 function WithHookValidationComponent() {
   const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: "1", startSlot: 0, duration: 2, title: "Cita 1" },
-    { id: "2", startSlot: 5, duration: 3, title: "Cita 2" },
+    { id: "1", startSlot: 0, duration: 2, title: "Appointment 1" },
+    { id: "2", startSlot: 5, duration: 3, title: "Appointment 2" },
   ]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -36,13 +36,13 @@ function WithHookValidationComponent() {
   });
 
   const handleAddAppointment = () => {
-    const newApt = { startSlot: 8, duration: 2, title: "Nueva cita" };
+    const newApt = { startSlot: 8, duration: 2, title: "New appointment" };
     const validation = validateAppointment(newApt);
 
     if (!validation.valid) {
       setValidationErrors((prev) => [
         ...prev,
-        validation.error || "Error desconocido",
+        validation.error || "Unknown error",
       ]);
       return;
     }
@@ -66,7 +66,7 @@ function WithHookValidationComponent() {
     <div className="space-y-4">
       <Scheduler>
         <div className="border rounded-lg p-4">
-          <h3 className="font-bold mb-2">Lane con validación (Hook)</h3>
+          <h3 className="font-bold mb-2">Lane with validation (Hook)</h3>
           <Lane
             laneId="lane-1"
             appointments={appointments}
@@ -91,12 +91,12 @@ function WithHookValidationComponent() {
         onClick={handleAddAppointment}
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
       >
-        Añadir cita válida
+        Add valid appointment
       </button>
 
       {validationErrors.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded p-3">
-          <h4 className="font-bold text-red-700 mb-2">Errores de validación:</h4>
+          <h4 className="font-bold text-red-700 mb-2">Validation errors:</h4>
           <ul className="space-y-1">
             {validationErrors.map((error, idx) => (
               <li key={idx} className="text-red-600 text-sm">
@@ -115,16 +115,16 @@ export const WithHookValidation: Story = {
 };
 
 /**
- * Componente para el ejemplo con función pura validateNewAppointment
+ * Component for the pure function validateNewAppointment example
  */
 function WithPureValidationComponent() {
   const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: "1", startSlot: 0, duration: 2, title: "Cita 1" },
+    { id: "1", startSlot: 0, duration: 2, title: "Appointment 1" },
   ]);
   const [message, setMessage] = useState<string>("");
 
   const handleValidateSlot = (startSlot: number) => {
-    const newApt = { startSlot, duration: 2, title: "Nueva cita" };
+    const newApt = { startSlot, duration: 2, title: "New appointment" };
 
     const result = validateNewAppointment(newApt, {
       appointments,
@@ -134,7 +134,7 @@ function WithPureValidationComponent() {
     });
 
     if (result.valid) {
-      setMessage(`✓ Slot ${startSlot} es válido`);
+      setMessage(`✓ Slot ${startSlot} is valid`);
       setAppointments((prev) => [
         ...prev,
         { ...newApt, id: `${Date.now()}` },
@@ -148,7 +148,7 @@ function WithPureValidationComponent() {
     <div className="space-y-4">
       <Scheduler>
         <div className="border rounded-lg p-4">
-          <h3 className="font-bold mb-2">Lane con validación (Función pura)</h3>
+          <h3 className="font-bold mb-2">Lane with validation (Pure function)</h3>
           <Lane
             laneId="lane-1"
             appointments={appointments}
@@ -207,29 +207,29 @@ export const WithPureValidation: Story = {
 };
 
 /**
- * Componente para el ejemplo con validador personalizado
+ * Component for the custom validator example
  */
 function WithCustomValidatorComponent() {
   const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: "1", startSlot: 0, duration: 2, title: "Cita prioritaria" },
+    { id: "1", startSlot: 0, duration: 2, title: "Priority appointment" },
   ]);
   const [message, setMessage] = useState<string>("");
   const idCounterRef = useRef(0);
 
   const customValidator = (appointment: Appointment): ValidationResult => {
-    // Validación personalizada: las citas no pueden tener duración mayor a 5 slots
+    // Custom validation: appointments cannot last longer than 5 slots
     if (appointment.duration > 5) {
       return {
         valid: false,
-        error: "Las citas no pueden durar más de 5 slots",
+        error: "Appointments cannot last longer than 5 slots",
       };
     }
 
-    // Validación personalizada: las citas no pueden empezar antes del slot 2
+    // Custom validation: appointments cannot start before slot 2
     if (appointment.startSlot < 2) {
       return {
         valid: false,
-        error: "Las citas deben empezar en el slot 2 o posterior",
+        error: "Appointments must start at slot 2 or later",
       };
     }
 
@@ -240,7 +240,7 @@ function WithCustomValidatorComponent() {
     const appointmentToValidate = {
       startSlot,
       duration: 2,
-      title: "Nueva cita",
+      title: "New appointment",
     };
 
     const validation = customValidator({
@@ -258,7 +258,7 @@ function WithCustomValidatorComponent() {
       id: `apt-${idCounterRef.current}`,
     };
 
-    setMessage(`✓ Cita añadida en slot ${startSlot}`);
+    setMessage(`✓ Appointment added at slot ${startSlot}`);
     setAppointments((prev) => [...prev, newApt]);
   };
 
@@ -266,9 +266,9 @@ function WithCustomValidatorComponent() {
     <div className="space-y-4">
       <Scheduler>
         <div className="border rounded-lg p-4">
-          <h3 className="font-bold mb-2">Lane con validador personalizado</h3>
+          <h3 className="font-bold mb-2">Lane with custom validator</h3>
           <p className="text-sm text-gray-600 mb-2">
-            Restricciones: duración máx 5 slots, inicio mín slot 2
+            Restrictions: max duration 5 slots, min start slot 2
           </p>
           <Lane
             laneId="lane-1"
@@ -321,7 +321,7 @@ export const WithCustomValidator: Story = {
 };
 
 /**
- * Componente para el ejemplo con solapamientos permitidos
+ * Component for the allowed overlaps example
  */
 function WithAllowOverlapComponent() {
   const [appointments, setAppointments] = useState<Appointment[]>([
@@ -329,14 +329,14 @@ function WithAllowOverlapComponent() {
       id: "1",
       startSlot: 0,
       duration: 3,
-      title: "Cita principal",
+      title: "Main appointment",
       allowOverlap: false,
     },
     {
       id: "2",
       startSlot: 1,
       duration: 2,
-      title: "Cita solapada permitida",
+      title: "Allowed overlapping appointment",
       allowOverlap: true,
     },
   ]);
@@ -353,7 +353,7 @@ function WithAllowOverlapComponent() {
     const newApt = {
       startSlot: 1,
       duration: 2,
-      title: "Otra cita solapada",
+      title: "Another overlapping appointment",
       allowOverlap: true,
     };
 
@@ -374,9 +374,9 @@ function WithAllowOverlapComponent() {
     <div className="space-y-4">
       <Scheduler>
         <div className="border rounded-lg p-4">
-          <h3 className="font-bold mb-2">Lane con solapamientos permitidos</h3>
+          <h3 className="font-bold mb-2">Lane with allowed overlaps</h3>
           <p className="text-sm text-gray-600 mb-2">
-            Las citas con allowOverlap: true pueden solaparse
+            Appointments with allowOverlap: true can overlap
           </p>
           <Lane
             laneId="lane-1"
@@ -395,7 +395,7 @@ function WithAllowOverlapComponent() {
         onClick={handleAddOverlappingAppointment}
         className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
       >
-        Añadir cita solapada permitida
+        Add allowed overlapping appointment
       </button>
     </div>
   );

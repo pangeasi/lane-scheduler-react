@@ -10,7 +10,7 @@ import {
   getOverlappingAppointments,
   getEventCoordinates,
   getReactEventCoordinates,
-  hasInvalidOverlap,
+  hasInvalidOverlapWithTargets,
 } from "../utils/laneUtils";
 
 export const Lane: React.FC<LaneProps> = ({
@@ -91,7 +91,7 @@ export const Lane: React.FC<LaneProps> = ({
             apt.id,
             appointments
           );
-          const invalidOverlap = hasInvalidOverlap(overlaps, apt.allowOverlap ?? false);
+          const invalidOverlap = hasInvalidOverlapWithTargets(overlaps);
           const isValid =
             !invalidOverlap &&
             isValidPosition(
@@ -218,7 +218,7 @@ export const Lane: React.FC<LaneProps> = ({
         apt.id,
         appointments
       );
-      const invalidOverlap = hasInvalidOverlap(overlaps, apt.allowOverlap ?? false);
+      const invalidOverlap = hasInvalidOverlapWithTargets(overlaps);
 
       if (
         !invalidOverlap &&

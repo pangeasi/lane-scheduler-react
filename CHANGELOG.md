@@ -2,6 +2,13 @@
 
 ## [1.1.1] - Unreleased
 
+### Breaking Changes
+
+- **Fixed `allowOverlap` semantics**: The `allowOverlap` property now correctly represents whether OTHER appointments can overlap with this one, not whether this appointment can overlap with others.
+  - **Old behavior**: An appointment with `allowOverlap: true` could overlap with any other appointment
+  - **New behavior**: An appointment with `allowOverlap: true` allows others to overlap with it. When dragging/resizing, an appointment can only be placed where ALL target appointments have `allowOverlap: true`
+  - **Migration**: If you relied on `allowOverlap: true` to allow overlapping, you need to set `allowOverlap: true` on the target appointments instead
+
 ### Performance Improvements
 
 - **Refactored pure functions to utilities**: Extracted pure logic functions (`isSlotBlocked`, `getSlotFromX`, `isPointOverLane`, `isValidPosition`, `getOverlappingAppointments`, `getEventCoordinates`, `getReactEventCoordinates`) to `src/utils/laneUtils.ts` for better testability and reusability
@@ -10,11 +17,12 @@
 - **Memoized finalConfig object**: Wrapped `finalConfig` object creation with `useMemo` to prevent recreation on every render
 - **Memoized renderAppointment function**: Wrapped `renderAppointment` with `useCallback` to prevent unnecessary re-renders of appointment elements
 - **Optimized slot rendering**: Wrapped slot element creation with `useMemo` to only recalculate when dependencies change
-- **Improved overlap validation logic**: Added optimized `hasInvalidOverlap` utility function for better performance during drag/resize operations that fire hundreds of times per second
+- **Improved overlap validation logic**: Added new `hasInvalidOverlapWithTargets` utility function for validating overlaps based on target appointments during drag/resize operations
 
 ### Fixed
 
 - Event listener cleanup now properly handles all registered listeners via AbortController
+- Fixed `allowOverlap` validation to check target appointments instead of dragging appointment
 
 ## [1.1.0] - 13-11-2025
 

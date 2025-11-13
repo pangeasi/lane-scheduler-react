@@ -1,21 +1,21 @@
-# Sistema de Validación de Citas
+# Appointment Validation System
 
-Este documento describe cómo utilizar el sistema de validación de citas en `lane-scheduler-react`.
+This document describes how to use the appointment validation system in `lane-scheduler-react`.
 
-## Descripción general
+## Overview
 
-El sistema de validación proporciona dos formas de validar appointments:
+The validation system provides two ways to validate appointments:
 
-1. **Hook `useAppointmentValidation`**: Para validación reactiva dentro de componentes React
-2. **Función pura `validateNewAppointment`**: Para validación sin depender de React
+1. **Hook `useAppointmentValidation`**: For reactive validation within React components
+2. **Pure function `validateNewAppointment`**: For validation without depending on React
 
-Ambas realizan las mismas validaciones:
-- Slot inicial dentro del rango permitido
-- Cita no excede el número total de slots
-- No hay slots bloqueados en la posición propuesta
-- No hay solapamientos inválidos con otras citas
+Both perform the same validations:
+- Initial slot within the allowed range
+- Appointment does not exceed the total number of slots
+- No blocked slots in the proposed position
+- No invalid overlaps with other appointments
 
-## Tipos
+## Types
 
 ### `ValidationResult`
 
@@ -27,9 +27,9 @@ interface ValidationResult {
 }
 ```
 
-## Opción 1: Hook `useAppointmentValidation`
+## Option 1: Hook `useAppointmentValidation`
 
-### Uso
+### Usage
 
 ```typescript
 import { useAppointmentValidation } from '@pangeasi/lane-scheduler-react';
@@ -44,31 +44,31 @@ const MyComponent = () => {
     totalSlots: 20
   });
 
-  // Validar una nueva cita
+  // Validate a new appointment
   const handleAddAppointment = (newApt: Omit<Appointment, 'id'>) => {
     const result = validateAppointment(newApt);
 
     if (!result.valid) {
-      console.error(result.error); // "La cita se solapa con otra existente"
+      console.error(result.error); // "The appointment overlaps with an existing one"
       if (result.conflictingAppointments) {
-        console.log('Citas en conflicto:', result.conflictingAppointments);
+        console.log('Conflicting appointments:', result.conflictingAppointments);
       }
       return;
     }
 
-    // Añadir la cita si es válida
+    // Add the appointment if it's valid
     const appointmentWithId = { ...newApt, id: generateId() };
     setAppointments(prev => [...prev, appointmentWithId]);
   };
 
-  // Verificación rápida (solo true/false)
+  // Quick check (just true/false)
   const handleSlotDoubleClick = (slot: number) => {
-    const newApt = { startSlot: slot, duration: 2, title: 'Nueva' };
+    const newApt = { startSlot: slot, duration: 2, title: 'New' };
 
     if (canAddAppointment(newApt)) {
       handleAddAppointment(newApt);
     } else {
-      toast.warning('No se puede crear la cita aquí');
+      toast.warning('Cannot create appointment here');
     }
   };
 
@@ -94,7 +94,7 @@ const MyComponent = () => {
 };
 ```
 
-### Props del hook
+### Hook props
 
 ```typescript
 interface UseAppointmentValidationProps {
@@ -105,7 +105,7 @@ interface UseAppointmentValidationProps {
 }
 ```
 
-### Retorno del hook
+### Hook return value
 
 ```typescript
 {
@@ -114,9 +114,9 @@ interface UseAppointmentValidationProps {
 }
 ```
 
-## Opción 2: Función pura `validateNewAppointment`
+## Option 2: Pure function `validateNewAppointment`
 
-### Uso
+### Usage
 
 ```typescript
 import { validateNewAppointment } from '@pangeasi/lane-scheduler-react';
@@ -138,22 +138,22 @@ const result = validateNewAppointment(
 if (!result.valid) {
   console.error(result.error);
 } else {
-  // Proceder
+  // Proceed
 }
 ```
 
-### Cuando usar esta opción
+### When to use this option
 
-- Validar citas fuera de un componente React
-- En servicios o utilidades
-- En Web Workers
-- En validaciones síncronas sin necesidad de reactive dependencies
+- Validate appointments outside of a React component
+- In services or utilities
+- In Web Workers
+- In synchronous validations without the need for reactive dependencies
 
-## Opción 3: Props de validación en Lane
+## Option 3: Validation props on Lane
 
 ### Callback `onValidationError`
 
-Se ejecuta cuando hay un error de validación en el Lane:
+Executed when there is a validation error in the Lane:
 
 ```typescript
 <Lane
@@ -162,7 +162,7 @@ Se ejecuta cuando hay un error de validación en el Lane:
   onValidationError={(error) => {
     toast.error(error.error);
     if (error.conflictingAppointments) {
-      console.log('Conflictos:', error.conflictingAppointments);
+      console.log('Conflicts:', error.conflictingAppointments);
     }
   }}
 />
@@ -170,23 +170,23 @@ Se ejecuta cuando hay un error de validación en el Lane:
 
 ### `customValidator`
 
-Permite añadir lógica de validación personalizada:
+Allows you to add custom validation logic:
 
 ```typescript
 const customValidator = (appointment: Appointment): ValidationResult => {
-  // Las citas no pueden durar más de 8 horas (16 slots)
+  // Appointments cannot last more than 8 hours (16 slots)
   if (appointment.duration > 16) {
     return {
       valid: false,
-      error: 'Las citas no pueden durar más de 8 horas'
+      error: 'Appointments cannot last more than 8 hours'
     };
   }
 
-  // Las citas no pueden empezar en slots impares
+  // Appointments cannot start on odd slots
   if (appointment.startSlot % 2 !== 0) {
     return {
       valid: false,
-      error: 'Las citas deben empezar en slots pares'
+      error: 'Appointments must start on even slots'
     };
   }
 
@@ -202,7 +202,7 @@ const customValidator = (appointment: Appointment): ValidationResult => {
 
 ### `strictMode`
 
-Cuando está habilitado, previene incluso el intento de drag a zonas inválidas (futuro):
+When enabled, prevents even the attempt to drag to invalid zones (future):
 
 ```typescript
 <Lane
@@ -212,16 +212,16 @@ Cuando está habilitado, previene incluso el intento de drag a zonas inválidas 
 />
 ```
 
-## Casos de uso comunes
+## Common use cases
 
-### 1. Validar antes de añadir una nueva cita
+### 1. Validate before adding a new appointment
 
 ```typescript
 const handleAddAppointment = (startSlot: number) => {
   const newApt: Omit<Appointment, 'id'> = {
     startSlot,
     duration: 2,
-    title: 'Nueva cita'
+    title: 'New appointment'
   };
 
   const validation = validateAppointment(newApt);
@@ -231,11 +231,11 @@ const handleAddAppointment = (startSlot: number) => {
     return;
   }
 
-  // Proceder a añadir
+  // Proceed to add
 };
 ```
 
-### 2. Validar durante drag-and-drop
+### 2. Validate during drag-and-drop
 
 ```typescript
 const handleAppointmentChange = (updated: Appointment): boolean => {
@@ -243,7 +243,7 @@ const handleAppointmentChange = (updated: Appointment): boolean => {
 
   if (!validation.valid) {
     onValidationError?.(validation);
-    return false; // Rechazar el cambio
+    return false; // Reject the change
   }
 
   setAppointments(prev =>
@@ -253,7 +253,7 @@ const handleAppointmentChange = (updated: Appointment): boolean => {
 };
 ```
 
-### 3. Mostrar zonas disponibles antes de crear
+### 3. Show available zones before creating
 
 ```typescript
 const isSlotAvailable = (slot: number): boolean => {
@@ -264,7 +264,7 @@ const isSlotAvailable = (slot: number): boolean => {
   });
 };
 
-// Usar para renderizar slots disponibles visualmente
+// Use to render available slots visually
 <Lane
   renderSlot={(slot, isBlocked) => {
     const isAvailable = isSlotAvailable(slot);
@@ -277,56 +277,56 @@ const isSlotAvailable = (slot: number): boolean => {
 />
 ```
 
-### 4. Permitir solapamientos seleccionados
+### 4. Allow selected overlaps
 
 ```typescript
 const appointment: Appointment = {
   id: "1",
   startSlot: 0,
   duration: 2,
-  title: "Cita con solapamiento permitido",
-  allowOverlap: true // Permite solaparse con otras citas
+  title: "Appointment with allowed overlap",
+  allowOverlap: true // Allows overlapping with other appointments
 };
 
-// El validador no rechazará solapamientos si allowOverlap es true
+// The validator will not reject overlaps if allowOverlap is true
 const result = validateAppointment(appointment);
 ```
 
-## Mensajes de error
+## Error messages
 
-El sistema proporciona mensajes de error descriptivos:
+The system provides descriptive error messages:
 
-| Situación | Error |
+| Situation | Error |
 |-----------|-------|
-| Slot inicial fuera de rango | "El slot inicial está fuera del rango permitido" |
-| Cita excede total slots | "La cita excede el número total de slots" |
-| Slot bloqueado | "El slot {N} está bloqueado" |
-| Solapamiento inválido | "La cita se solapa con otra existente" |
+| Initial slot out of range | "The initial slot is out of the allowed range" |
+| Appointment exceeds total slots | "The appointment exceeds the total number of slots" |
+| Blocked slot | "Slot {N} is blocked" |
+| Invalid overlap | "The appointment overlaps with an existing one" |
 
-## Manejo de slots bloqueados
+## Handling blocked slots
 
-Si una cita tiene un callback `onBlockedSlot`, puede decidir si permitir el uso de ese slot:
+If an appointment has an `onBlockedSlot` callback, it can decide whether to allow the use of that slot:
 
 ```typescript
 const appointment: Appointment = {
   id: "1",
   startSlot: 0,
   duration: 2,
-  title: "Cita especial",
+  title: "Special appointment",
   onBlockedSlot: (slotIndex, laneId) => {
-    // Retornar true para permitir, false para rechazar
-    // Por ejemplo: solo permitir en el lane "special"
+    // Return true to allow, false to reject
+    // For example: only allow in the "special" lane
     return laneId === "special";
   }
 };
 ```
 
-## Integración con estado global
+## Integration with global state
 
-Si usas Redux, Zustand u otro state manager:
+If you use Redux, Zustand or another state manager:
 
 ```typescript
-// En tu store/slice
+// In your store/slice
 const appointmentSlice = createSlice({
   name: 'appointments',
   initialState: [],
@@ -354,23 +354,23 @@ const appointmentSlice = createSlice({
 
 ## Testing
 
-### Con vitest/jest
+### With vitest/jest
 
 ```typescript
 import { validateNewAppointment } from '@pangeasi/lane-scheduler-react';
 
-describe('Validación de citas', () => {
-  it('rechaza citas fuera del rango', () => {
+describe('Appointment validation', () => {
+  it('rejects appointments out of range', () => {
     const result = validateNewAppointment(
       { startSlot: 25, duration: 2 },
       { appointments: [], blockedSlots: [], totalSlots: 20, laneId: 'test' }
     );
 
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('fuera del rango');
+    expect(result.error).toContain('out of the allowed range');
   });
 
-  it('acepta citas válidas', () => {
+  it('accepts valid appointments', () => {
     const result = validateNewAppointment(
       { startSlot: 0, duration: 2 },
       { appointments: [], blockedSlots: [], totalSlots: 20, laneId: 'test' }
@@ -379,7 +379,7 @@ describe('Validación de citas', () => {
     expect(result.valid).toBe(true);
   });
 
-  it('rechaza citas que se solapan', () => {
+  it('rejects appointments that overlap', () => {
     const existing: Appointment[] = [
       { id: '1', startSlot: 0, duration: 2 }
     ];
@@ -397,17 +397,17 @@ describe('Validación de citas', () => {
 
 ## Performance
 
-- El hook usa `useCallback` con dependencias precisas para evitar re-renders innecesarios
-- La función pura es O(n) donde n es el número de citas existentes
-- Las validaciones se ejecutan de forma corta-circuitada (fail-fast)
+- The hook uses `useCallback` with precise dependencies to avoid unnecessary re-renders
+- The pure function is O(n) where n is the number of existing appointments
+- Validations are executed in short-circuit mode (fail-fast)
 
 ## Changelog
 
 ### v1.2.0
-- ✨ Añadido sistema de validación con hook y función pura
-- ✨ Nuevas props en Lane: `onValidationError`, `customValidator`, `strictMode`
-- 📝 Documentación completa con ejemplos
+- ✨ Added appointment validation system with hook and pure function
+- ✨ New props on Lane: `onValidationError`, `customValidator`, `strictMode`
+- 📝 Complete documentation with examples
 
-## Contribuir
+## Contributing
 
-Si encuentras casos de uso no cubiertos o mejoras posibles, abre un issue en GitHub.
+If you find uncovered use cases or possible improvements, open an issue on GitHub.

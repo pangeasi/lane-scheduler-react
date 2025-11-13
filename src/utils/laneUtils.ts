@@ -1,14 +1,14 @@
 import type { Appointment } from "../types";
 
 /**
- * Verifica si un slot está bloqueado
+ * Checks if a slot is blocked
  */
 export const isSlotBlocked = (slot: number, blockedSlots: number[]): boolean => {
   return blockedSlots.includes(slot);
 };
 
 /**
- * Calcula el slot a partir de la coordenada X relativa a la caja del lane
+ * Calculates the slot from the X coordinate relative to the lane box
  */
 export const getSlotFromX = (
   x: number,
@@ -23,7 +23,7 @@ export const getSlotFromX = (
 };
 
 /**
- * Verifica si un punto (x, y) está dentro del lane
+ * Checks if a point (x, y) is within the lane
  */
 export const isPointOverLane = (
   x: number,
@@ -37,7 +37,7 @@ export const isPointOverLane = (
 };
 
 /**
- * Verifica si una posición es válida para un appointment
+ * Checks if a position is valid for an appointment
  */
 export const isValidPosition = (
   startSlot: number,
@@ -67,7 +67,7 @@ export const isValidPosition = (
 };
 
 /**
- * Obtiene los appointments que se solapan con la posición especificada
+ * Gets the appointments that overlap with the specified position
  */
 export const getOverlappingAppointments = (
   startSlot: number,
@@ -84,8 +84,8 @@ export const getOverlappingAppointments = (
 };
 
 /**
- * Verifica si hay un solapamiento inválido (sin allowOverlap)
- * Optimizado para cortarse temprano
+ * Checks if there is an invalid overlap (without allowOverlap)
+ * Optimized for early exit
  */
 export const hasInvalidOverlap = (
   overlaps: Appointment[],
@@ -96,7 +96,23 @@ export const hasInvalidOverlap = (
 };
 
 /**
- * Extrae las coordenadas de un evento de mouse o touch
+ * Checks if an appointment can overlap with target appointments
+ * Returns true if ALL overlapping appointments allow overlap
+ * This means: if even ONE overlapping appointment doesn't allow overlap, it's invalid
+ */
+export const hasInvalidOverlapWithTargets = (
+  overlaps: Appointment[]
+): boolean => {
+  // If no overlaps, it's valid
+  if (overlaps.length === 0) return false;
+
+  // Check if ALL overlapping appointments allow overlap
+  // If any one doesn't allow overlap, it's invalid
+  return overlaps.some((apt) => !apt.allowOverlap);
+};
+
+/**
+ * Extracts coordinates from a mouse or touch event
  */
 export const getEventCoordinates = (
   e: MouseEvent | TouchEvent
@@ -114,7 +130,7 @@ export const getEventCoordinates = (
 };
 
 /**
- * Extrae las coordenadas de un evento React de mouse o touch
+ * Extracts coordinates from a React mouse or touch event
  */
 export const getReactEventCoordinates = (
   e: React.MouseEvent | React.TouchEvent

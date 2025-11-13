@@ -13,23 +13,23 @@ export interface AppointmentValidationContext {
 }
 
 /**
- * Valida una cita usando una función pura (sin hooks)
+ * Validates an appointment using a pure function (without hooks)
  *
- * Realiza las siguientes validaciones:
- * 1. El slot inicial está dentro del rango permitido [0, totalSlots)
- * 2. La cita no excede el número total de slots
- * 3. Ninguno de los slots de la cita está bloqueado (respeta onBlockedSlot)
- * 4. No hay solapamientos inválidos con otras citas
+ * Performs the following validations:
+ * 1. The initial slot is within the allowed range [0, totalSlots)
+ * 2. The appointment does not exceed the total number of slots
+ * 3. None of the appointment slots are blocked (respects onBlockedSlot)
+ * 4. There are no invalid overlaps with other appointments
  *
- * @param newAppointment - La cita a validar (sin ID o con ID para actualizaciones)
- * @param context - Contexto de validación con appointments, blockedSlots, totalSlots y laneId
+ * @param newAppointment - The appointment to validate (without ID or with ID for updates)
+ * @param context - Validation context with appointments, blockedSlots, totalSlots and laneId
  *
- * @returns ValidationResult con estado valid y mensaje de error si aplica
+ * @returns ValidationResult with valid status and error message if applicable
  *
  * @example
  * ```typescript
  * const result = validateNewAppointment(
- *   { startSlot: 0, duration: 2, title: "Nueva cita" },
+ *   { startSlot: 0, duration: 2, title: "New appointment" },
  *   { appointments: [], blockedSlots: [5], totalSlots: 20, laneId: "lane-1" }
  * );
  *
@@ -53,28 +53,28 @@ export function validateNewAppointment(
 ): ValidationResult {
   const { appointments, blockedSlots, totalSlots, laneId } = context;
 
-  // Validación: slot inicial dentro del rango permitido
+  // Validation: initial slot within the allowed range
   if (newAppointment.startSlot < 0 || newAppointment.startSlot >= totalSlots) {
     return {
       valid: false,
-      error: "El slot inicial está fuera del rango permitido",
+      error: "The initial slot is out of the allowed range",
     };
   }
 
-  // Validación: la cita no excede el número total de slots
+  // Validation: the appointment does not exceed the total number of slots
   if (newAppointment.startSlot + newAppointment.duration > totalSlots) {
     return {
       valid: false,
-      error: "La cita excede el número total de slots",
+      error: "The appointment exceeds the total number of slots",
     };
   }
 
-  // Validación: ninguno de los slots está bloqueado
+  // Validation: none of the slots are blocked
   for (let i = 0; i < newAppointment.duration; i++) {
     const currentSlot = newAppointment.startSlot + i;
 
     if (isSlotBlocked(currentSlot, blockedSlots)) {
-      // Verificar si la cita tiene un manejador para slots bloqueados
+      // Check if the appointment has a handler for blocked slots
       if (typeof newAppointment.onBlockedSlot === "function") {
         const canUseBlockedSlot = newAppointment.onBlockedSlot(
           currentSlot,
@@ -83,19 +83,19 @@ export function validateNewAppointment(
         if (!canUseBlockedSlot) {
           return {
             valid: false,
-            error: `El slot ${currentSlot} está bloqueado`,
+            error: `Slot ${currentSlot} is blocked`,
           };
         }
       } else {
         return {
           valid: false,
-          error: `El slot ${currentSlot} está bloqueado`,
+          error: `Slot ${currentSlot} is blocked`,
         };
       }
     }
   }
 
-  // Validación: verificar solapamientos
+  // Validation: check overlaps
   const overlaps = getOverlappingAppointments(
     newAppointment.startSlot,
     newAppointment.duration,
@@ -107,7 +107,7 @@ export function validateNewAppointment(
   if (hasInvalidOverlap(overlaps, allowOverlap)) {
     return {
       valid: false,
-      error: "La cita se solapa con otra existente",
+      error: "The appointment overlaps with an existing one",
       conflictingAppointments: overlaps,
     };
   }
