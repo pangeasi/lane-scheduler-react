@@ -84,6 +84,18 @@ export const getOverlappingAppointments = (
 };
 
 /**
+ * Verifica si hay un solapamiento inválido (sin allowOverlap)
+ * Optimizado para cortarse temprano
+ */
+export const hasInvalidOverlap = (
+  overlaps: Appointment[],
+  allowOverlap: boolean
+): boolean => {
+  if (allowOverlap) return false;
+  return overlaps.length > 0;
+};
+
+/**
  * Extrae las coordenadas de un evento de mouse o touch
  */
 export const getEventCoordinates = (

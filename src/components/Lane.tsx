@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useContext, useEffect } from "react";
+import React, { useRef, useCallback, useContext, useEffect, useMemo } from "react";
 import { SchedulerContext } from "../context/SchedulerContext";
 import { DEFAULT_CONFIG } from "../constants";
 import type { Appointment, LaneProps } from "../types";
@@ -10,6 +10,7 @@ import {
   getOverlappingAppointments,
   getEventCoordinates,
   getReactEventCoordinates,
+  hasInvalidOverlap,
 } from "../utils/laneUtils";
 
 export const Lane: React.FC<LaneProps> = ({
@@ -24,7 +25,7 @@ export const Lane: React.FC<LaneProps> = ({
   onSlotClick,
   onAppointmentChange,
 }) => {
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
+  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
   const laneRef = useRef<HTMLDivElement>(null);
   const { dragState, setDragState, resizeState, setResizeState } =
     useContext(SchedulerContext) || {};
@@ -90,9 +91,9 @@ export const Lane: React.FC<LaneProps> = ({
             apt.id,
             appointments
           );
-          const hasInvalidOverlap = overlaps.some(() => !apt.allowOverlap);
+          const invalidOverlap = hasInvalidOverlap(overlaps, apt.allowOverlap ?? false);
           const isValid =
-            !hasInvalidOverlap &&
+            !invalidOverlap &&
             isValidPosition(
               slot,
               apt.duration,
@@ -217,10 +218,10 @@ export const Lane: React.FC<LaneProps> = ({
         apt.id,
         appointments
       );
-      const hasInvalidOverlap = overlaps.some(() => !apt.allowOverlap);
+      const invalidOverlap = hasInvalidOverlap(overlaps, apt.allowOverlap ?? false);
 
       if (
-        !hasInvalidOverlap &&
+        !invalidOverlap &&
         isValidPosition(
           newStartSlot,
           newDuration,
@@ -294,7 +295,7 @@ export const Lane: React.FC<LaneProps> = ({
     }
   }, [resizeState, laneId, handleResizeMove, handleResizeEnd]);
 
-  const renderAppointment = (appointment: Appointment) => {
+  const renderAppointment = useCallback((appointment: Appointment) => {
     const isDraggingThis =
       dragState?.appointmentId === appointment.id &&
       dragState?.sourceLaneId === laneId;
@@ -313,12 +314,12 @@ export const Lane: React.FC<LaneProps> = ({
       opacity = 0.3;
     }
 
-    if (isShowingPreview && dragState.targetLaneId === laneId) {
+    if (isShowingPreview && dragState?.targetLaneId === laneId) {
       startSlot = dragState.currentStartSlot;
       opacity = dragState.isOverValidLane ? 0.7 : 0.3;
     } else if (isResizing) {
-      startSlot = resizeState.currentStartSlot;
-      duration = resizeState.currentDuration;
+      startSlot = resizeState!.currentStartSlot;
+      duration = resizeState!.currentDuration;
       opacity = 0.7;
     }
 
@@ -327,8 +328,8 @@ export const Lane: React.FC<LaneProps> = ({
 
     if (
       isShowingPreview &&
-      dragState.sourceLaneId !== laneId &&
-      dragState.targetLaneId !== laneId
+      dragState?.sourceLaneId !== laneId &&
+      dragState?.targetLaneId !== laneId
     ) {
       return null;
     }
@@ -393,12 +394,41 @@ export const Lane: React.FC<LaneProps> = ({
         </div>
       </div>
     );
-  };
+  }, [dragState, resizeState, laneId, finalConfig, renderAppointmentContent, handleDragStart, handleResizeStart]);
 
   const showPreviewFromOtherLane =
     dragState &&
     dragState.sourceLaneId !== laneId &&
     dragState.targetLaneId === laneId;
+
+  const slotElements = useMemo(() => {
+    return Array.from({ length: totalSlots }).map((_, idx) => {
+      const isBlocked = isSlotBlocked(idx, blockedSlots);
+
+      return (
+        <div
+          key={idx}
+          className="absolute top-0 bottom-0 border-r"
+          style={{
+            left: `${idx * finalConfig.slotWidth}px`,
+            width: `${finalConfig.slotWidth}px`,
+            backgroundColor: isBlocked ? "#fee2e2" : finalConfig.slotColor,
+            borderColor: finalConfig.slotBorderColor,
+          }}
+          onClick={() => onSlotClick?.(idx, laneId)}
+          onDoubleClick={() => onSlotDoubleClick?.(idx, laneId)}
+        >
+          {renderSlot ? (
+            renderSlot(idx, isBlocked)
+          ) : (
+            <div className="flex items-center justify-center h-full text-xs text-gray-400">
+              {idx}
+            </div>
+          )}
+        </div>
+      );
+    });
+  }, [totalSlots, blockedSlots, finalConfig, renderSlot, onSlotClick, onSlotDoubleClick, laneId]);
 
   return (
     <div
@@ -409,32 +439,7 @@ export const Lane: React.FC<LaneProps> = ({
         width: `${totalSlots * finalConfig.slotWidth}px`,
       }}
     >
-      {Array.from({ length: totalSlots }).map((_, idx) => {
-        const isBlocked = isSlotBlocked(idx, blockedSlots);
-
-        return (
-          <div
-            key={idx}
-            className="absolute top-0 bottom-0 border-r"
-            style={{
-              left: `${idx * finalConfig.slotWidth}px`,
-              width: `${finalConfig.slotWidth}px`,
-              backgroundColor: isBlocked ? "#fee2e2" : finalConfig.slotColor,
-              borderColor: finalConfig.slotBorderColor,
-            }}
-            onClick={() => onSlotClick?.(idx, laneId)}
-            onDoubleClick={() => onSlotDoubleClick?.(idx, laneId)}
-          >
-            {renderSlot ? (
-              renderSlot(idx, isBlocked)
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">
-                {idx}
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {slotElements}
 
       {appointments.map(renderAppointment)}
 
