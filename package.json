@@ -47,7 +47,8 @@
     "preview:storybook": "npx http-server docs -p 6007",
     "deploy:storybook": "./scripts/deploy-storybook.sh && git add docs/ && git commit -m 'Deploy Storybook documentation' && git push origin main",
     "prepublishOnly": "npm run build",
-    "storybook": "storybook dev -p 6006"
+    "storybook": "storybook dev -p 6006",
+    "test": "playwright test"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
