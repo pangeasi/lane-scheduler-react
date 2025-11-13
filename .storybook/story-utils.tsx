@@ -29,6 +29,25 @@ export interface StatefulLaneWrapperProps {
   children?: React.ReactNode;
 }
 
+const renderAppointmentContentDefault = (appointment: Appointment) => (
+  <div
+    style={{
+      padding: "4px",
+      color: "white",
+      fontSize: "12px",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    }}
+  >
+    {appointment.title}
+    <br />
+    {`(${appointment.startSlot} - ${
+      appointment.startSlot + appointment.duration
+    })`}
+  </div>
+);
+
 /**
  * Stateful Lane Wrapper for Storybook stories
  *
@@ -45,7 +64,7 @@ export const StatefulLaneWrapper: React.FC<StatefulLaneWrapperProps> = ({
   totalSlots = 24,
   config = { height: 80, slotWidth: 60 },
   renderSlot,
-  renderAppointmentContent,
+  renderAppointmentContent = renderAppointmentContentDefault,
   showControls = true,
   showDebugInfo = true,
   onAppointmentMoveOverwrite,
