@@ -59,6 +59,9 @@ export const Lane: React.FC<LaneProps> = ({
         appointment.startSlot * finalConfig.slotWidth + rect.left;
       const offsetX = startX - appointmentLeft;
 
+      // Set cursor to grabbing during drag
+      document.documentElement.classList.add("cursor-grabbing");
+
       setDragState({
         appointmentId: appointment.id,
         appointment: appointment,
@@ -157,7 +160,11 @@ export const Lane: React.FC<LaneProps> = ({
   );
 
   useEffect(() => {
-    if (!dragState) return;
+    if (!dragState) {
+      // Reset cursor when drag ends
+      document.documentElement.classList.remove("cursor-grabbing");
+      return;
+    }
 
     const controller = new AbortController();
     const { signal } = controller;
@@ -188,6 +195,9 @@ export const Lane: React.FC<LaneProps> = ({
 
       e.stopPropagation();
       const { x: startX } = getReactEventCoordinates(e);
+
+      // Set cursor on document during resize
+      document.documentElement.classList.add("cursor-ew-resize");
 
       setResizeState({
         appointmentId: appointment.id,
@@ -288,6 +298,9 @@ export const Lane: React.FC<LaneProps> = ({
       });
     }
 
+    // Reset cursor after resize
+    document.documentElement.classList.remove("cursor-ew-resize");
+
     setResizeState(null);
   }, [resizeState, laneId, appointments, onAppointmentChange, setResizeState]);
 
@@ -369,6 +382,7 @@ export const Lane: React.FC<LaneProps> = ({
             zIndex: isDraggingThis ? 1000 : 1,
             borderRadius: "8px",
             overflow: "hidden",
+            cursor: !appointment.locked ? "grab" : "default",
           }}
           onMouseDown={(e) => handleDragStart(e, appointment)}
           onTouchStart={(e) => handleDragStart(e, appointment)}
@@ -378,7 +392,7 @@ export const Lane: React.FC<LaneProps> = ({
             {renderAppointmentContent ? (
               renderAppointmentContent(appointment)
             ) : (
-              <div className="h-full bg-blue-500 text-black rounded shadow-md flex items-center justify-center cursor-move relative overflow-hidden">
+              <div className="h-full bg-blue-500 text-black rounded shadow-md flex items-center justify-center relative overflow-hidden">
                 <div className="px-2 text-sm truncate pointer-events-none">
                   {appointment.title || `Apt ${appointment.id}`}
                 </div>

@@ -398,6 +398,8 @@ export const Mobile: Story = {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          color: "white",
+          backgroundColor: "#247885",
         }}
       >
         {appointment.title}

@@ -32,7 +32,7 @@ export interface StatefulLaneWrapperProps {
 const renderAppointmentContentDefault = (appointment: Appointment) => (
   <div
     className={`bg-blue-400 text-white h-full px-4 truncate ${
-      appointment.locked ? "cursor-not-allowed" : "cursor-move"
+      appointment.locked ? "cursor-not-allowed" : "cursor-grab"
     }`}
   >
     {appointment.title}
