@@ -2,6 +2,8 @@
 
 A flexible, drag-and-drop scheduler component library for React with full TypeScript support.
 
+**Unit Agnostic Design**: This library doesn't make assumptions about what your slots represent. Whether you're scheduling time intervals, physical spaces, resource allocations, or any sequential system - the components work the same way.
+
 ## Overview
 
 Lane Scheduler React provides a powerful and flexible scheduling interface that allows users to:
@@ -21,7 +23,7 @@ The `Scheduler` component provides the context for drag & drop operations. It co
 
 ### Lane
 
-The `Lane` component represents a single scheduling timeline. Each lane can contain multiple appointments and has its own blocked slots and configuration.
+The `Lane` component represents a single scheduling timeline divided into slots. Each lane can contain multiple appointments and has its own blocked slots and configuration. Slots are unit-agnostic - they can represent time periods, physical spaces, resources, or any sequential system.
 
 ### Appointments
 
@@ -52,9 +54,9 @@ Appointments are the schedulable items that can be moved and resized. They have 
 
 ### 🔒 Blocked Slots
 
-- Define unavailable time periods
+- Define unavailable slots (time periods, spaces, resources, etc.)
 - Custom logic with `onBlockedSlot` callback
-- Visual indicators for blocked times
+- Visual indicators for blocked slots
 - VIP appointments can override blocks
 
 ### 🎨 Customizable Rendering

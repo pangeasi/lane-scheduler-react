@@ -3,13 +3,7 @@ import { useState } from "react";
 import { Scheduler } from "./Scheduler";
 import { Lane } from "./Lane";
 import type { Appointment } from "../types";
-
-// Mock action function for stories
-const action =
-  (name: string) =>
-  (...args: unknown[]) => {
-    console.log(`Action: ${name}`, args);
-  };
+import { action } from "storybook/actions";
 
 // Sample data for multi-lane scenarios
 interface LaneData {

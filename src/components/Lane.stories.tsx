@@ -1,62 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Lane } from "./Lane";
-import { Scheduler } from "./Scheduler";
 import type { Appointment } from "../types";
+import { action } from "storybook/actions";
+import { StatefulLaneWrapper } from "../../.storybook/story-utils";
+import {
+  defaultSampleAppointments as sampleAppointments,
+  vipAppointments,
+  extendedSampleAppointments,
+  type ExtendedAppointment,
+} from "../../.storybook/story-constants";
 
-// Extended appointment type for stories with custom properties
-interface ExtendedAppointment extends Appointment {
-  attendees?: string[];
-  priority?: "low" | "medium" | "high";
-  location?: string;
-}
-
-// Mock action function for stories
-const action =
-  (name: string) =>
-  (...args: unknown[]) => {
-    console.log(`Action: ${name}`, args);
-  };
-
-// Sample appointments for stories
-const sampleAppointments: Appointment[] = [
-  {
-    id: "meeting-1",
-    startSlot: 4,
-    duration: 6,
-    title: "Team Meeting",
-    allowOverlap: false,
-  },
-  {
-    id: "call-1",
-    startSlot: 12,
-    duration: 4,
-    title: "Client Call",
-    allowOverlap: true,
-  },
-  {
-    id: "lunch-1",
-    startSlot: 20,
-    duration: 4,
-    title: "Lunch Break",
-    locked: true,
-  },
-];
-
-const vipAppointments: Appointment[] = [
-  {
-    id: "vip-1",
-    startSlot: 14,
-    duration: 6,
-    title: "VIP Meeting (can override blocked slots)",
-    allowOverlap: false,
-    onBlockedSlot: (slotIndex, laneId) => {
-      action("VIP appointment on blocked slot")(
-        `Slot ${slotIndex} in ${laneId}`
-      );
-      return true; // Allow VIP appointments on blocked slots
-    },
-  },
-];
+// The StatefulLaneWrapper is now imported from .storybook/story-utils.tsx
 
 const meta: Meta<typeof Lane> = {
   title: "Components/Lane",
@@ -84,13 +38,29 @@ The Lane component should be wrapped in a Scheduler component to enable drag & d
     },
   },
   decorators: [
-    (Story) => (
-      <Scheduler onAppointmentMove={action("onAppointmentMove")}>
-        <div style={{ padding: "20px", backgroundColor: "#f8f9fa" }}>
-          <Story />
-        </div>
-      </Scheduler>
-    ),
+    (Story, context) => {
+      // For interactive stories that override the decorator, use their own render
+      if (
+        context.story === "Interactive" ||
+        context.story === "Interactive Custom Setup" ||
+        context.story === "Interactive with Custom Rendering" ||
+        context.story === "Interactive Minimal" ||
+        context.story === "Interactive VIP"
+      ) {
+        return <Story />;
+      }
+
+      // For basic stories, wrap with StatefulLaneWrapper using the story's args
+      return (
+        <StatefulLaneWrapper
+          initialAppointments={context.args.appointments || sampleAppointments}
+          initialBlockedSlots={context.args.blockedSlots || [0, 1, 22, 23]}
+          showControls={false}
+          showDebugInfo={false}
+          {...context.args}
+        />
+      );
+    },
   ],
   argTypes: {
     laneId: {
@@ -356,27 +326,7 @@ export const CustomSlotRendering: Story = {
 export const CustomAppointmentContent: Story = {
   name: "Custom Appointment Content",
   args: {
-    appointments: [
-      {
-        id: "1",
-        startSlot: 4,
-        duration: 6,
-        title: "Design Review",
-        // Custom properties
-        attendees: ["John", "Sarah", "Mike"],
-        priority: "high",
-        location: "Conference Room A",
-      } as ExtendedAppointment,
-      {
-        id: "2",
-        startSlot: 12,
-        duration: 4,
-        title: "Client Call",
-        attendees: ["Alice", "Bob"],
-        priority: "medium",
-        location: "Online",
-      } as ExtendedAppointment,
-    ],
+    appointments: extendedSampleAppointments,
     renderAppointmentContent: (appointment: Appointment) => {
       const extAppt = appointment as ExtendedAppointment;
       return (

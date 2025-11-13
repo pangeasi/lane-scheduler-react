@@ -2,6 +2,8 @@
 
 A flexible, drag-and-drop scheduler component for React with full TypeScript support.
 
+**Unit Agnostic**: This library doesn't assume any specific unit of measurement. Slots represent abstract spaces that can be mapped to any unit - time intervals, physical spaces, resource allocations, or any other sequential organization system.
+
 ## � [Interactive Documentation](https://pangeasi.github.io/lane-scheduler-react/)
 
 Explore the complete Storybook documentation with interactive examples, API reference, and usage guides!
@@ -10,7 +12,7 @@ Explore the complete Storybook documentation with interactive examples, API refe
 
 - 🎯 **Drag & Drop** - Move appointments between lanes with smooth animations
 - 📏 **Resizable** - Adjust appointment duration from both ends
-- 🔒 **Locked Slots** - Block specific time slots with custom logic
+- 🔒 **Locked Slots** - Block specific slots with custom logic
 - 🎨 **Customizable** - Full control over rendering with render props
 - 📱 **Mobile Ready** - Touch events support
 - ⚡ **TypeScript** - Full type safety
@@ -52,7 +54,7 @@ function App() {
       <Lane
         laneId="room-1"
         appointments={appointments}
-        totalSlots={24}
+        totalSlots={24} // Could represent hours, rooms, days, etc.
         config={{
           height: 80,
           slotWidth: 60,
@@ -74,29 +76,46 @@ function App() {
 
 ### Lane
 
-| Prop                       | Type            | Default  | Description                |
-| -------------------------- | --------------- | -------- | -------------------------- |
-| `laneId`                   | `string`        | required | Unique identifier          |
-| `appointments`             | `Appointment[]` | `[]`     | Array of appointments      |
-| `blockedSlots`             | `number[]`      | `[]`     | Blocked slot indices       |
-| `totalSlots`               | `number`        | `24`     | Total number of slots      |
-| `config`                   | `LaneConfig`    | `{}`     | Visual configuration       |
-| `renderSlot`               | `function`      | -        | Custom slot renderer       |
-| `renderAppointmentContent` | `function`      | -        | Custom appointment content |
-| `onSlotDoubleClick`        | `function`      | -        | Slot double-click handler  |
-| `onAppointmentChange`      | `function`      | -        | Appointment change handler |
+| Prop                       | Type            | Default  | Description                           |
+| -------------------------- | --------------- | -------- | ------------------------------------- |
+| `laneId`                   | `string`        | required | Unique identifier                     |
+| `appointments`             | `Appointment[]` | `[]`     | Array of appointments                 |
+| `blockedSlots`             | `number[]`      | `[]`     | Blocked slot indices                  |
+| `totalSlots`               | `number`        | `24`     | Total number of slots (unit agnostic) |
+| `config`                   | `LaneConfig`    | `{}`     | Visual configuration                  |
+| `renderSlot`               | `function`      | -        | Custom slot renderer                  |
+| `renderAppointmentContent` | `function`      | -        | Custom appointment content            |
+| `onSlotDoubleClick`        | `function`      | -        | Slot double-click handler             |
+| `onAppointmentChange`      | `function`      | -        | Appointment change handler            |
 
 ## Advanced Usage
 
 ### Custom Slot Rendering
 
 ```tsx
+// Example: Time-based slots (30-minute intervals)
 <Lane
   renderSlot={(slotIdx, isBlocked) => (
     <div>{slotIdx % 2 === 0 ? `${slotIdx / 2}:00` : ":30"}</div>
   )}
 />
+
+// Example: Room-based slots
+<Lane
+  renderSlot={(slotIdx, isBlocked) => (
+    <div>Room {slotIdx + 1}</div>
+  )}
+/>
+
+// Example: Day-based slots
+<Lane
+  renderSlot={(slotIdx, isBlocked) => (
+    <div>Day {slotIdx + 1}</div>
+  )}
+/>
 ```
+
+**Note**: The library doesn't impose any unit interpretation. You define what each slot represents through your custom rendering logic.
 
 ### Blocked Slots with Custom Logic
 
