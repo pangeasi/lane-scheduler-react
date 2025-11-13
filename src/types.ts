@@ -35,6 +35,12 @@ export interface LaneProps {
   onValidationError?: (error: ValidationResult) => void;
   customValidator?: (appointment: Appointment) => ValidationResult;
   strictMode?: boolean;
+  // Custom classNames
+  appointmentContainerClassName?: string;
+  appointmentResizerStartClassName?: string;
+  appointmentResizerEndClassName?: string;
+  appointmentResizerStartInnerClassName?: string;
+  appointmentResizerEndInnerClassName?: string;
 }
 
 export interface SchedulerContextType {

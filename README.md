@@ -76,17 +76,22 @@ function App() {
 
 ### Lane
 
-| Prop                       | Type            | Default  | Description                           |
-| -------------------------- | --------------- | -------- | ------------------------------------- |
-| `laneId`                   | `string`        | required | Unique identifier                     |
-| `appointments`             | `Appointment[]` | `[]`     | Array of appointments                 |
-| `blockedSlots`             | `number[]`      | `[]`     | Blocked slot indices                  |
-| `totalSlots`               | `number`        | `24`     | Total number of slots (unit agnostic) |
-| `config`                   | `LaneConfig`    | `{}`     | Visual configuration                  |
-| `renderSlot`               | `function`      | -        | Custom slot renderer                  |
-| `renderAppointmentContent` | `function`      | -        | Custom appointment content            |
-| `onSlotDoubleClick`        | `function`      | -        | Slot double-click handler             |
-| `onAppointmentChange`      | `function`      | -        | Appointment change handler            |
+| Prop                              | Type            | Default  | Description                                       |
+| --------------------------------- | --------------- | -------- | ------------------------------------------------- |
+| `laneId`                          | `string`        | required | Unique identifier                                 |
+| `appointments`                    | `Appointment[]` | `[]`     | Array of appointments                             |
+| `blockedSlots`                    | `number[]`      | `[]`     | Blocked slot indices                              |
+| `totalSlots`                      | `number`        | `24`     | Total number of slots (unit agnostic)             |
+| `config`                          | `LaneConfig`    | `{}`     | Visual configuration                              |
+| `renderSlot`                      | `function`      | -        | Custom slot renderer                              |
+| `renderAppointmentContent`        | `function`      | -        | Custom appointment content                        |
+| `onSlotDoubleClick`               | `function`      | -        | Slot double-click handler                         |
+| `onAppointmentChange`             | `function`      | -        | Appointment change handler                        |
+| `appointmentContainerClassName`      | `string`        | -        | Custom className for appointment container           |
+| `appointmentResizerStartClassName`  | `string`        | -        | Custom className for start-edge resizer outer       |
+| `appointmentResizerEndClassName`    | `string`        | -        | Custom className for end-edge resizer outer         |
+| `appointmentResizerStartInnerClassName` | `string`    | -        | Custom className for start-edge resizer inner line  |
+| `appointmentResizerEndInnerClassName`   | `string`    | -        | Custom className for end-edge resizer inner line    |
 
 ### Appointment Properties
 
@@ -174,7 +179,7 @@ const vipAppointment = {
 
 ### Styling
 
-The component uses Tailwind CSS internally. To customize colors:
+The component uses Tailwind CSS internally. To customize colors and visual configuration:
 
 ```tsx
 <Lane
@@ -186,6 +191,28 @@ The component uses Tailwind CSS internally. To customize colors:
   }}
 />
 ```
+
+### Custom Element ClassNames
+
+Customize the appearance of appointment containers and resizers with your own CSS classes:
+
+```tsx
+<Lane
+  laneId="room-1"
+  appointments={appointments}
+  appointmentContainerClassName="border-2 border-blue-600 rounded-lg"
+  appointmentResizerStartClassName="bg-green-500 opacity-80"
+  appointmentResizerEndClassName="bg-red-500 opacity-80"
+  appointmentResizerStartInnerClassName="bg-green-700 w-1"
+  appointmentResizerEndInnerClassName="bg-red-700 w-1"
+/>
+```
+
+**Note**: Custom classes are intelligently merged with default classes. Classes with conflicting properties (e.g., `bg-*`, `border-*`, `w-*`) will override the defaults while preserving non-conflicting styles.
+
+Each resizer element has two levels:
+- **Outer container** (`appointmentResizerStartClassName`/`appointmentResizerEndClassName`): The larger hitbox for easier grabbing
+- **Inner line** (`appointmentResizerStartInnerClassName`/`appointmentResizerEndInnerClassName`): The visible line within the container
 
 ## TypeScript
 

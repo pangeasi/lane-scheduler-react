@@ -18,6 +18,7 @@ import {
   getReactEventCoordinates,
   hasInvalidOverlapWithTargets,
 } from "../utils/laneUtils";
+import { mergeClassNames } from "../utils/classNameUtils";
 
 export const Lane: React.FC<LaneProps> = ({
   laneId,
@@ -30,6 +31,11 @@ export const Lane: React.FC<LaneProps> = ({
   onSlotDoubleClick,
   onSlotClick,
   onAppointmentChange,
+  appointmentContainerClassName,
+  appointmentResizerStartClassName,
+  appointmentResizerEndClassName,
+  appointmentResizerStartInnerClassName,
+  appointmentResizerEndInnerClassName,
 }) => {
   const finalConfig = useMemo(
     () => ({ ...DEFAULT_CONFIG, ...config }),
@@ -344,10 +350,15 @@ export const Lane: React.FC<LaneProps> = ({
         return null;
       }
 
+      const appointmentContainerClasses = mergeClassNames(
+        "absolute top-0 shadow-md",
+        appointmentContainerClassName
+      );
+
       return (
         <div
           key={appointment.id}
-          className="absolute top-0 shadow-md"
+          className={appointmentContainerClasses}
           style={{
             left: `${left}px`,
             width: `${width}px`,
@@ -379,7 +390,10 @@ export const Lane: React.FC<LaneProps> = ({
           {!appointment.locked && (
             <>
               <div
-                className="absolute left-0 cursor-ew-resize z-10 flex items-center justify-center"
+                className={mergeClassNames(
+                  "absolute left-0 cursor-ew-resize z-10 flex items-center justify-center",
+                  appointmentResizerStartClassName
+                )}
                 style={{
                   width: "10px",
                   left: "4px",
@@ -396,14 +410,20 @@ export const Lane: React.FC<LaneProps> = ({
                 }}
               >
                 <div
-                  className="w-0.5 h-full bg-white rounded-sm"
+                  className={mergeClassNames(
+                    "w-0.5 h-full bg-white rounded-sm",
+                    appointmentResizerStartInnerClassName
+                  )}
                   style={{
                     filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))",
                   }}
                 />
               </div>
               <div
-                className="absolute right-0 cursor-ew-resize z-10 flex items-center justify-center"
+                className={mergeClassNames(
+                  "absolute right-0 cursor-ew-resize z-10 flex items-center justify-center",
+                  appointmentResizerEndClassName
+                )}
                 style={{
                   width: "10px",
                   right: "4px",
@@ -420,7 +440,10 @@ export const Lane: React.FC<LaneProps> = ({
                 }}
               >
                 <div
-                  className="w-0.5 h-full bg-white rounded-sm"
+                  className={mergeClassNames(
+                    "w-0.5 h-full bg-white rounded-sm",
+                    appointmentResizerEndInnerClassName
+                  )}
                   style={{
                     filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))",
                   }}
@@ -439,6 +462,11 @@ export const Lane: React.FC<LaneProps> = ({
       renderAppointmentContent,
       handleDragStart,
       handleResizeStart,
+      appointmentContainerClassName,
+      appointmentResizerStartClassName,
+      appointmentResizerEndClassName,
+      appointmentResizerStartInnerClassName,
+      appointmentResizerEndInnerClassName,
     ]
   );
 
