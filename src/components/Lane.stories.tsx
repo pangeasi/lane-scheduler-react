@@ -330,7 +330,10 @@ export const CustomAppointmentContent: Story = {
     renderAppointmentContent: (appointment: Appointment) => {
       const extAppt = appointment as ExtendedAppointment;
       return (
-        <div style={{ padding: "8px", height: "100%", overflow: "hidden" }}>
+        <div
+          className="bg-amber-200"
+          style={{ padding: "8px", height: "100%", overflow: "hidden" }}
+        >
           <div
             style={{
               fontWeight: "bold",

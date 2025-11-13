@@ -1,4 +1,10 @@
-import React, { useRef, useCallback, useContext, useEffect, useMemo } from "react";
+import React, {
+  useRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { SchedulerContext } from "../context/SchedulerContext";
 import { DEFAULT_CONFIG } from "../constants";
 import type { Appointment, LaneProps } from "../types";
@@ -25,7 +31,10 @@ export const Lane: React.FC<LaneProps> = ({
   onSlotClick,
   onAppointmentChange,
 }) => {
-  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
+  const finalConfig = useMemo(
+    () => ({ ...DEFAULT_CONFIG, ...config }),
+    [config]
+  );
   const laneRef = useRef<HTMLDivElement>(null);
   const { dragState, setDragState, resizeState, setResizeState } =
     useContext(SchedulerContext) || {};
@@ -295,106 +304,125 @@ export const Lane: React.FC<LaneProps> = ({
     }
   }, [resizeState, laneId, handleResizeMove, handleResizeEnd]);
 
-  const renderAppointment = useCallback((appointment: Appointment) => {
-    const isDraggingThis =
-      dragState?.appointmentId === appointment.id &&
-      dragState?.sourceLaneId === laneId;
-    const isShowingPreview =
-      dragState?.appointmentId === appointment.id &&
-      dragState?.targetLaneId === laneId;
-    const isResizing =
-      resizeState?.appointmentId === appointment.id &&
-      resizeState?.laneId === laneId;
+  const renderAppointment = useCallback(
+    (appointment: Appointment) => {
+      const isDraggingThis =
+        dragState?.appointmentId === appointment.id &&
+        dragState?.sourceLaneId === laneId;
+      const isShowingPreview =
+        dragState?.appointmentId === appointment.id &&
+        dragState?.targetLaneId === laneId;
+      const isResizing =
+        resizeState?.appointmentId === appointment.id &&
+        resizeState?.laneId === laneId;
 
-    let startSlot = appointment.startSlot;
-    let duration = appointment.duration;
-    let opacity = 1;
+      let startSlot = appointment.startSlot;
+      let duration = appointment.duration;
+      let opacity = 1;
 
-    if (isDraggingThis) {
-      opacity = 0.3;
-    }
+      if (isDraggingThis) {
+        opacity = 0.3;
+      }
 
-    if (isShowingPreview && dragState?.targetLaneId === laneId) {
-      startSlot = dragState.currentStartSlot;
-      opacity = dragState.isOverValidLane ? 0.7 : 0.3;
-    } else if (isResizing) {
-      startSlot = resizeState!.currentStartSlot;
-      duration = resizeState!.currentDuration;
-      opacity = 0.7;
-    }
+      if (isShowingPreview && dragState?.targetLaneId === laneId) {
+        startSlot = dragState.currentStartSlot;
+        opacity = dragState.isOverValidLane ? 0.7 : 0.3;
+      } else if (isResizing) {
+        startSlot = resizeState!.currentStartSlot;
+        duration = resizeState!.currentDuration;
+        opacity = 0.7;
+      }
 
-    const left = startSlot * finalConfig.slotWidth;
-    const width = duration * finalConfig.slotWidth;
+      const left = startSlot * finalConfig.slotWidth;
+      const width = duration * finalConfig.slotWidth;
 
-    if (
-      isShowingPreview &&
-      dragState?.sourceLaneId !== laneId &&
-      dragState?.targetLaneId !== laneId
-    ) {
-      return null;
-    }
+      if (
+        isShowingPreview &&
+        dragState?.sourceLaneId !== laneId &&
+        dragState?.targetLaneId !== laneId
+      ) {
+        return null;
+      }
 
-    return (
-      <div
-        key={appointment.id}
-        className="absolute top-0"
-        style={{
-          left: `${left}px`,
-          width: `${width}px`,
-          height: `${finalConfig.height}px`,
-          opacity: opacity,
-          transition: isDraggingThis || isResizing ? "none" : "all 0.2s ease",
-          touchAction: "none",
-          zIndex: isDraggingThis ? 1000 : 1,
-        }}
-      >
+      return (
         <div
-          className={`h-full ${
-            dragState?.isOverValidLane === false && isShowingPreview
-              ? "bg-red-500"
-              : "bg-blue-500"
-          } text-white rounded shadow-md flex items-center justify-center relative overflow-hidden ${
-            appointment.locked ? "cursor-not-allowed" : "cursor-move"
-          }`}
-          onMouseDown={(e) => handleDragStart(e, appointment)}
-          onTouchStart={(e) => handleDragStart(e, appointment)}
+          key={appointment.id}
+          className="absolute top-0"
+          style={{
+            left: `${left}px`,
+            width: `${width}px`,
+            height: `${finalConfig.height}px`,
+            opacity: opacity,
+            transition: isDraggingThis || isResizing ? "none" : "all 0.2s ease",
+            touchAction: "none",
+            zIndex: isDraggingThis ? 1000 : 1,
+          }}
         >
-          {!appointment.locked && (
-            <>
-              <div
-                className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-700 z-10"
-                onMouseDown={(e) => handleResizeStart(e, appointment, "start")}
-                onTouchStart={(e) => handleResizeStart(e, appointment, "start")}
-              />
-              <div
-                className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-700 z-10"
-                onMouseDown={(e) => handleResizeStart(e, appointment, "end")}
-                onTouchStart={(e) => handleResizeStart(e, appointment, "end")}
-              />
-            </>
-          )}
-
-          <div className="px-2 text-sm truncate pointer-events-none">
-            {renderAppointmentContent
-              ? renderAppointmentContent(appointment)
-              : appointment.title || `Apt ${appointment.id}`}
-          </div>
-
-          {appointment.locked && (
-            <div className="absolute top-1 right-1">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                  clipRule="evenodd"
+          <div
+            className={`h-full ${
+              dragState?.isOverValidLane === false && isShowingPreview
+                ? "bg-red-500"
+                : "bg-blue-500"
+            } text-white rounded shadow-md flex items-center justify-center relative overflow-hidden ${
+              appointment.locked ? "cursor-not-allowed" : "cursor-move"
+            }`}
+            onMouseDown={(e) => handleDragStart(e, appointment)}
+            onTouchStart={(e) => handleDragStart(e, appointment)}
+          >
+            {!appointment.locked && (
+              <>
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-700 z-10"
+                  onMouseDown={(e) =>
+                    handleResizeStart(e, appointment, "start")
+                  }
+                  onTouchStart={(e) =>
+                    handleResizeStart(e, appointment, "start")
+                  }
                 />
-              </svg>
+                <div
+                  className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-700 z-10"
+                  onMouseDown={(e) => handleResizeStart(e, appointment, "end")}
+                  onTouchStart={(e) => handleResizeStart(e, appointment, "end")}
+                />
+              </>
+            )}
+
+            <div className="px-2 text-sm truncate pointer-events-none">
+              {renderAppointmentContent
+                ? renderAppointmentContent(appointment)
+                : appointment.title || `Apt ${appointment.id}`}
             </div>
-          )}
+
+            {appointment.locked && (
+              <div className="absolute top-1 right-1">
+                <svg
+                  className="w-3 h-3"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    );
-  }, [dragState, resizeState, laneId, finalConfig, renderAppointmentContent, handleDragStart, handleResizeStart]);
+      );
+    },
+    [
+      dragState,
+      resizeState,
+      laneId,
+      finalConfig,
+      renderAppointmentContent,
+      handleDragStart,
+      handleResizeStart,
+    ]
+  );
 
   const showPreviewFromOtherLane =
     dragState &&
@@ -428,7 +456,15 @@ export const Lane: React.FC<LaneProps> = ({
         </div>
       );
     });
-  }, [totalSlots, blockedSlots, finalConfig, renderSlot, onSlotClick, onSlotDoubleClick, laneId]);
+  }, [
+    totalSlots,
+    blockedSlots,
+    finalConfig,
+    renderSlot,
+    onSlotClick,
+    onSlotDoubleClick,
+    laneId,
+  ]);
 
   return (
     <div
