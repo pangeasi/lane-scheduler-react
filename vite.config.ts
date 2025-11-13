@@ -28,9 +28,9 @@ export default defineConfig({
         },
       },
     },
-    cssCodeSplit: false, // Generar un solo archivo CSS
+    cssCodeSplit: false, // Generate a single CSS file
     sourcemap: true,
     minify: false,
-    emptyOutDir: false, // No limpiar dist para preservar archivos .d.ts
+    emptyOutDir: false, // Don't clean dist to preserve .d.ts files
   },
 });

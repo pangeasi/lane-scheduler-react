@@ -1,6 +1,12 @@
 # Changelog
 
-## [1.0.0] - 2024-11-12
+## [1.1.0] - 13-11-2025
+
+### Features
+
+- Storybook documentation
+
+## [1.0.0] - 12-11-2025
 
 ### Added
 

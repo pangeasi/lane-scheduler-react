@@ -92,7 +92,6 @@ export const Lane: React.FC<LaneProps> = ({
       const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
       const startY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-      // Calcular el offset del cursor dentro del appointment
       const rect = laneRef.current?.getBoundingClientRect();
       if (!rect) return;
 
@@ -107,7 +106,7 @@ export const Lane: React.FC<LaneProps> = ({
         startY,
         currentX: startX,
         currentY: startY,
-        offsetX, // Guardar el offset para usarlo en handleDragOver
+        offsetX,
         originalStartSlot: appointment.startSlot,
         currentStartSlot: appointment.startSlot,
         sourceLaneId: laneId,
@@ -129,7 +128,6 @@ export const Lane: React.FC<LaneProps> = ({
       }
 
       if (isPointOverLane(x, y)) {
-        // Ajustar la posición x con el offset del cursor
         const adjustedX = x - (dragState.offsetX || 0);
         const slot = getSlotFromX(adjustedX);
 
@@ -159,7 +157,6 @@ export const Lane: React.FC<LaneProps> = ({
           );
         }
       } else {
-        // Actualizar posición del cursor incluso fuera del lane
         setDragState((prev) =>
           prev
             ? {

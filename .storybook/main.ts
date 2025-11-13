@@ -9,7 +9,7 @@ const config: StorybookConfig = {
   },
 
   viteFinal: async (config, { configType }) => {
-    // Configurar base para GitHub Pages solo en build
+    // Configure base for GitHub Pages only in build
     if (configType === "PRODUCTION") {
       config.base = "/lane-scheduler-react/";
     }
