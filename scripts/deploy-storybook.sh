@@ -1,31 +1,31 @@
 #!/bin/bash
 
-# Script para hacer deploy de Storybook a GitHub Pages
+# Script to deploy Storybook to GitHub Pages
 
 set -e
 
-echo "🚀 Iniciando deploy de Storybook a GitHub Pages..."
+echo "🚀 Starting Storybook deployment to GitHub Pages..."
 
-# Limpiar directorio docs
-echo "🧹 Limpiando directorio docs..."
+# Clean docs directory
+echo "🧹 Cleaning docs directory..."
 rm -rf docs
 
-# Construir Storybook
-echo "📦 Construyendo Storybook..."
+# Build Storybook
+echo "📦 Building Storybook..."
 NODE_ENV=production npm run build:storybook
 
-# Verificar que se creó el directorio docs
+# Verify that docs directory was created
 if [ ! -d "docs" ]; then
-    echo "❌ Error: No se pudo crear el directorio docs"
+    echo "❌ Error: Could not create docs directory"
     exit 1
 fi
 
-# Crear archivo .nojekyll para GitHub Pages
-echo "📄 Creando .nojekyll..."
+# Create .nojekyll file for GitHub Pages
+echo "📄 Creating .nojekyll..."
 touch docs/.nojekyll
 
-# Agregar README específico para la documentación
-echo "📝 Creando README para la documentación..."
+# Add specific README for documentation
+echo "📝 Creating README for documentation..."
 cat > docs/README.md << EOF
 # Lane Scheduler React - Documentation
 
@@ -50,8 +50,8 @@ A flexible, drag-and-drop scheduler component library for React with full TypeSc
 - [NPM Package](https://www.npmjs.com/package/@pangeasi/lane-scheduler-react)
 EOF
 
-echo "✅ Storybook construido exitosamente en ./docs"
-echo "📖 Documentación disponible en: ./docs/index.html"
+echo "✅ Storybook built successfully in ./docs"
+echo "📖 Documentation available at: ./docs/index.html"
 echo ""
-echo "Para hacer deploy a GitHub Pages, ejecuta:"
+echo "To deploy to GitHub Pages, run:"
 echo "git add docs/ && git commit -m 'Deploy Storybook documentation' && git push origin main"
