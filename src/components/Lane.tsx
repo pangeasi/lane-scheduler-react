@@ -2,6 +2,15 @@ import React, { useRef, useCallback, useContext, useEffect } from "react";
 import { SchedulerContext } from "../context/SchedulerContext";
 import { DEFAULT_CONFIG } from "../constants";
 import type { Appointment, LaneProps } from "../types";
+import {
+  isSlotBlocked,
+  getSlotFromX,
+  isPointOverLane,
+  isValidPosition,
+  getOverlappingAppointments,
+  getEventCoordinates,
+  getReactEventCoordinates,
+} from "../utils/laneUtils";
 
 export const Lane: React.FC<LaneProps> = ({
   laneId,
@@ -20,77 +29,12 @@ export const Lane: React.FC<LaneProps> = ({
   const { dragState, setDragState, resizeState, setResizeState } =
     useContext(SchedulerContext) || {};
 
-  const isSlotBlocked = useCallback(
-    (slot: number) => {
-      return blockedSlots.includes(slot);
-    },
-    [blockedSlots]
-  );
-
-  const getSlotFromX = useCallback(
-    (x: number) => {
-      const rect = laneRef.current?.getBoundingClientRect();
-      if (!rect) return null;
-      const relativeX = x - rect.left;
-      const slot = Math.max(0, Math.floor(relativeX / finalConfig.slotWidth));
-      return slot < totalSlots ? slot : null;
-    },
-    [finalConfig.slotWidth, totalSlots]
-  );
-
-  const isPointOverLane = useCallback((x: number, y: number) => {
-    const rect = laneRef.current?.getBoundingClientRect();
-    if (!rect) return false;
-    return (
-      x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
-    );
-  }, []);
-
-  const isValidPosition = useCallback(
-    (
-      startSlot: number,
-      duration: number,
-      appointmentId: string,
-      appointmentData: Appointment | null = null
-    ) => {
-      if (startSlot < 0 || startSlot + duration > totalSlots) return false;
-
-      const apt =
-        appointmentData || appointments.find((a) => a.id === appointmentId);
-
-      for (let i = startSlot; i < startSlot + duration; i++) {
-        if (isSlotBlocked(i)) {
-          if (apt?.onBlockedSlot) {
-            if (!apt.onBlockedSlot(i, laneId)) return false;
-          } else {
-            return false;
-          }
-        }
-      }
-      return true;
-    },
-    [totalSlots, isSlotBlocked, appointments, laneId]
-  );
-
-  const getOverlappingAppointments = useCallback(
-    (startSlot: number, duration: number, excludeId: string) => {
-      return appointments.filter((apt) => {
-        if (apt.id === excludeId) return false;
-        const aptEnd = apt.startSlot + apt.duration;
-        const newEnd = startSlot + duration;
-        return !(aptEnd <= startSlot || apt.startSlot >= newEnd);
-      });
-    },
-    [appointments]
-  );
-
   const handleDragStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent, appointment: Appointment) => {
       if (appointment.locked || !setDragState) return;
 
       e.stopPropagation();
-      const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const startY = "touches" in e ? e.touches[0].clientY : e.clientY;
+      const { x: startX, y: startY } = getReactEventCoordinates(e);
 
       const rect = laneRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -119,29 +63,46 @@ export const Lane: React.FC<LaneProps> = ({
 
   const handleDragOver = useCallback(
     (x: number, y: number) => {
+      const rect = laneRef.current?.getBoundingClientRect();
+
       if (
         !dragState ||
         !setDragState ||
-        (dragState.sourceLaneId === laneId && !isPointOverLane(x, y))
+        (dragState.sourceLaneId === laneId && !isPointOverLane(x, y, rect))
       ) {
         return;
       }
 
-      if (isPointOverLane(x, y)) {
+      if (isPointOverLane(x, y, rect)) {
         const adjustedX = x - (dragState.offsetX || 0);
-        const slot = getSlotFromX(adjustedX);
+        const slot = getSlotFromX(
+          adjustedX,
+          rect,
+          finalConfig.slotWidth,
+          totalSlots
+        );
 
         if (slot !== null) {
           const apt = dragState.appointment;
           const overlaps = getOverlappingAppointments(
             slot,
             apt.duration,
-            apt.id
+            apt.id,
+            appointments
           );
           const hasInvalidOverlap = overlaps.some(() => !apt.allowOverlap);
           const isValid =
             !hasInvalidOverlap &&
-            isValidPosition(slot, apt.duration, apt.id, apt);
+            isValidPosition(
+              slot,
+              apt.duration,
+              apt.id,
+              totalSlots,
+              blockedSlots,
+              appointments,
+              laneId,
+              apt
+            );
 
           setDragState((prev) =>
             prev
@@ -171,10 +132,10 @@ export const Lane: React.FC<LaneProps> = ({
     [
       dragState,
       laneId,
-      isPointOverLane,
-      getSlotFromX,
-      getOverlappingAppointments,
-      isValidPosition,
+      finalConfig.slotWidth,
+      totalSlots,
+      blockedSlots,
+      appointments,
       setDragState,
     ]
   );
@@ -182,18 +143,22 @@ export const Lane: React.FC<LaneProps> = ({
   useEffect(() => {
     if (!dragState) return;
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const handleMove = (e: MouseEvent | TouchEvent) => {
-      const x = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const y = "touches" in e ? e.touches[0].clientY : e.clientY;
+      const { x, y } = getEventCoordinates(e);
       handleDragOver(x, y);
     };
 
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("mousemove", handleMove, { signal });
+    window.addEventListener("touchmove", handleMove, {
+      passive: false,
+      signal,
+    });
 
     return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("touchmove", handleMove);
+      controller.abort();
     };
   }, [dragState, handleDragOver]);
 
@@ -206,7 +171,7 @@ export const Lane: React.FC<LaneProps> = ({
       if (appointment.locked || !setResizeState) return;
 
       e.stopPropagation();
-      const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const { x: startX } = getReactEventCoordinates(e);
 
       setResizeState({
         appointmentId: appointment.id,
@@ -227,7 +192,7 @@ export const Lane: React.FC<LaneProps> = ({
       if (!resizeState || !setResizeState || resizeState.laneId !== laneId)
         return;
 
-      const currentX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const { x: currentX } = getEventCoordinates(e);
       const deltaX = currentX - resizeState.startX;
       const deltaSlots = Math.round(deltaX / finalConfig.slotWidth);
 
@@ -249,13 +214,22 @@ export const Lane: React.FC<LaneProps> = ({
       const overlaps = getOverlappingAppointments(
         newStartSlot,
         newDuration,
-        apt.id
+        apt.id,
+        appointments
       );
       const hasInvalidOverlap = overlaps.some(() => !apt.allowOverlap);
 
       if (
         !hasInvalidOverlap &&
-        isValidPosition(newStartSlot, newDuration, apt.id)
+        isValidPosition(
+          newStartSlot,
+          newDuration,
+          apt.id,
+          totalSlots,
+          blockedSlots,
+          appointments,
+          laneId
+        )
       ) {
         setResizeState((prev) =>
           prev
@@ -272,9 +246,9 @@ export const Lane: React.FC<LaneProps> = ({
       resizeState,
       laneId,
       finalConfig.slotWidth,
+      totalSlots,
+      blockedSlots,
       appointments,
-      getOverlappingAppointments,
-      isValidPosition,
       setResizeState,
     ]
   );
@@ -303,19 +277,19 @@ export const Lane: React.FC<LaneProps> = ({
 
   useEffect(() => {
     if (resizeState && resizeState.laneId === laneId) {
+      const controller = new AbortController();
+      const { signal } = controller;
+
       const handleMove = (e: MouseEvent | TouchEvent) => handleResizeMove(e);
       const handleEnd = () => handleResizeEnd();
 
-      window.addEventListener("mousemove", handleMove);
-      window.addEventListener("mouseup", handleEnd);
-      window.addEventListener("touchmove", handleMove);
-      window.addEventListener("touchend", handleEnd);
+      window.addEventListener("mousemove", handleMove, { signal });
+      window.addEventListener("mouseup", handleEnd, { signal });
+      window.addEventListener("touchmove", handleMove, { signal });
+      window.addEventListener("touchend", handleEnd, { signal });
 
       return () => {
-        window.removeEventListener("mousemove", handleMove);
-        window.removeEventListener("mouseup", handleEnd);
-        window.removeEventListener("touchmove", handleMove);
-        window.removeEventListener("touchend", handleEnd);
+        controller.abort();
       };
     }
   }, [resizeState, laneId, handleResizeMove, handleResizeEnd]);
@@ -436,7 +410,7 @@ export const Lane: React.FC<LaneProps> = ({
       }}
     >
       {Array.from({ length: totalSlots }).map((_, idx) => {
-        const isBlocked = isSlotBlocked(idx);
+        const isBlocked = isSlotBlocked(idx, blockedSlots);
 
         return (
           <div
