@@ -31,6 +31,10 @@ export interface LaneProps {
   onSlotDoubleClick?: (slotIndex: number, laneId: string) => void;
   onSlotClick?: (slotIndex: number, laneId: string) => void;
   onAppointmentChange?: (appointment: Appointment) => void;
+  // Validación de citas
+  onValidationError?: (error: ValidationResult) => void;
+  customValidator?: (appointment: Appointment) => ValidationResult;
+  strictMode?: boolean;
 }
 
 export interface SchedulerContextType {
@@ -64,6 +68,12 @@ export interface ResizeState {
   originalDuration: number;
   currentStartSlot: number;
   currentDuration: number;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  error?: string;
+  conflictingAppointments?: Appointment[];
 }
 
 export interface SchedulerProps {
