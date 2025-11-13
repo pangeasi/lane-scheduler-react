@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+/* Cursor states for drag and resize */
+html.cursor-grabbing,
+html.cursor-grabbing * {
+  cursor: grabbing !important;
+}
+
+html.cursor-ew-resize,
+html.cursor-ew-resize * {
+  cursor: ew-resize !important;
+}

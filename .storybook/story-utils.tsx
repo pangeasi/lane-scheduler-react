@@ -4,6 +4,7 @@ import { Scheduler } from "../src/components/Scheduler";
 import { Lane } from "../src/components/Lane";
 import type { Appointment } from "../src/types";
 import { defaultSampleAppointments } from "./story-constants";
+import { validateNewAppointment } from "../src/utils/appointmentValidation";
 
 // Props interface for the stateful wrapper
 export interface StatefulLaneWrapperProps {
@@ -28,6 +29,39 @@ export interface StatefulLaneWrapperProps {
   children?: React.ReactNode;
 }
 
+const renderAppointmentContentDefault = (appointment: Appointment) => (
+  <div
+    className={`bg-blue-400 text-white h-full px-4 truncate ${
+      appointment.locked ? "cursor-not-allowed" : "cursor-grab"
+    }`}
+  >
+    {appointment.title}
+    <br />
+    {`(${appointment.startSlot} - ${
+      appointment.startSlot + appointment.duration
+    })`}
+
+    {appointment.locked && (
+      <div className="absolute top-0 right-0">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4 m-1"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      </div>
+    )}
+  </div>
+);
+
 /**
  * Stateful Lane Wrapper for Storybook stories
  *
@@ -44,7 +78,7 @@ export const StatefulLaneWrapper: React.FC<StatefulLaneWrapperProps> = ({
   totalSlots = 24,
   config = { height: 80, slotWidth: 60 },
   renderSlot,
-  renderAppointmentContent,
+  renderAppointmentContent = renderAppointmentContentDefault,
   showControls = true,
   showDebugInfo = true,
   onAppointmentMoveOverwrite,
@@ -123,6 +157,16 @@ export const StatefulLaneWrapper: React.FC<StatefulLaneWrapperProps> = ({
       allowOverlap: false,
     };
     console.log("➕ Adding new appointment:", newAppointment);
+    const { valid, error } = validateNewAppointment(newAppointment, {
+      appointments,
+      blockedSlots,
+      totalSlots,
+      laneId,
+    });
+    if (!valid) {
+      console.error("❌ Cannot add appointment:", error);
+      return;
+    }
     setAppointments((prev) => {
       const updated = [...prev, newAppointment];
       console.log("📋 All appointments after add:", updated);

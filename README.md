@@ -76,17 +76,34 @@ function App() {
 
 ### Lane
 
-| Prop                       | Type            | Default  | Description                           |
-| -------------------------- | --------------- | -------- | ------------------------------------- |
-| `laneId`                   | `string`        | required | Unique identifier                     |
-| `appointments`             | `Appointment[]` | `[]`     | Array of appointments                 |
-| `blockedSlots`             | `number[]`      | `[]`     | Blocked slot indices                  |
-| `totalSlots`               | `number`        | `24`     | Total number of slots (unit agnostic) |
-| `config`                   | `LaneConfig`    | `{}`     | Visual configuration                  |
-| `renderSlot`               | `function`      | -        | Custom slot renderer                  |
-| `renderAppointmentContent` | `function`      | -        | Custom appointment content            |
-| `onSlotDoubleClick`        | `function`      | -        | Slot double-click handler             |
-| `onAppointmentChange`      | `function`      | -        | Appointment change handler            |
+| Prop                              | Type            | Default  | Description                                       |
+| --------------------------------- | --------------- | -------- | ------------------------------------------------- |
+| `laneId`                          | `string`        | required | Unique identifier                                 |
+| `appointments`                    | `Appointment[]` | `[]`     | Array of appointments                             |
+| `blockedSlots`                    | `number[]`      | `[]`     | Blocked slot indices                              |
+| `totalSlots`                      | `number`        | `24`     | Total number of slots (unit agnostic)             |
+| `config`                          | `LaneConfig`    | `{}`     | Visual configuration                              |
+| `renderSlot`                      | `function`      | -        | Custom slot renderer                              |
+| `renderAppointmentContent`        | `function`      | -        | Custom appointment content                        |
+| `onSlotDoubleClick`               | `function`      | -        | Slot double-click handler                         |
+| `onAppointmentChange`             | `function`      | -        | Appointment change handler                        |
+| `appointmentContainerClassName`      | `string`        | -        | Custom className for appointment container           |
+| `appointmentResizerStartClassName`  | `string`        | -        | Custom className for start-edge resizer outer       |
+| `appointmentResizerEndClassName`    | `string`        | -        | Custom className for end-edge resizer outer         |
+| `appointmentResizerStartInnerClassName` | `string`    | -        | Custom className for start-edge resizer inner line  |
+| `appointmentResizerEndInnerClassName`   | `string`    | -        | Custom className for end-edge resizer inner line    |
+
+### Appointment Properties
+
+| Property       | Type      | Description                                                                                              |
+| -------------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| `id`           | `string`  | Unique identifier                                                                                        |
+| `startSlot`    | `number`  | Starting slot index                                                                                      |
+| `duration`     | `number`  | Number of slots the appointment spans                                                                    |
+| `title`        | `string`  | Display text                                                                                             |
+| `locked`       | `boolean` | If true, prevents dragging and resizing                                                                  |
+| `allowOverlap` | `boolean` | If true, OTHER appointments are allowed to overlap with this one. Does NOT mean this can overlap others  |
+| `onBlockedSlot`| `function`| Custom logic to handle blocked slots (return true to allow placement)                                     |
 
 ## Advanced Usage
 
@@ -117,6 +134,35 @@ function App() {
 
 **Note**: The library doesn't impose any unit interpretation. You define what each slot represents through your custom rendering logic.
 
+### Blocking Overlaps with allowOverlap
+
+The `allowOverlap` property controls whether OTHER appointments can overlap with this appointment:
+
+```tsx
+// Appointments with allowOverlap: true allow others to be placed over them
+const flexibleAppointment = {
+  id: "1",
+  startSlot: 5,
+  duration: 2,
+  title: "Flexible Meeting",
+  allowOverlap: true, // Other appointments can overlap with this one
+};
+
+// Appointments without allowOverlap (default: false) block overlapping
+const strictAppointment = {
+  id: "2",
+  startSlot: 6,
+  duration: 2,
+  title: "Exclusive Meeting",
+  allowOverlap: false, // No other appointments can overlap with this one
+};
+
+// When dragging/resizing appointments:
+// - They can only overlap with appointments that have allowOverlap: true
+// - If they try to overlap with an appointment where allowOverlap: false,
+//   the drop/resize is rejected and shown in red
+```
+
 ### Blocked Slots with Custom Logic
 
 ```tsx
@@ -133,7 +179,7 @@ const vipAppointment = {
 
 ### Styling
 
-The component uses Tailwind CSS internally. To customize colors:
+The component uses Tailwind CSS internally. To customize colors and visual configuration:
 
 ```tsx
 <Lane
@@ -145,6 +191,28 @@ The component uses Tailwind CSS internally. To customize colors:
   }}
 />
 ```
+
+### Custom Element ClassNames
+
+Customize the appearance of appointment containers and resizers with your own CSS classes:
+
+```tsx
+<Lane
+  laneId="room-1"
+  appointments={appointments}
+  appointmentContainerClassName="border-2 border-blue-600 rounded-lg"
+  appointmentResizerStartClassName="bg-green-500 opacity-80"
+  appointmentResizerEndClassName="bg-red-500 opacity-80"
+  appointmentResizerStartInnerClassName="bg-green-700 w-1"
+  appointmentResizerEndInnerClassName="bg-red-700 w-1"
+/>
+```
+
+**Note**: Custom classes are intelligently merged with default classes. Classes with conflicting properties (e.g., `bg-*`, `border-*`, `w-*`) will override the defaults while preserving non-conflicting styles.
+
+Each resizer element has two levels:
+- **Outer container** (`appointmentResizerStartClassName`/`appointmentResizerEndClassName`): The larger hitbox for easier grabbing
+- **Inner line** (`appointmentResizerStartInnerClassName`/`appointmentResizerEndInnerClassName`): The visible line within the container
 
 ## TypeScript
 

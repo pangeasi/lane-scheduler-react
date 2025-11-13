@@ -1,7 +1,24 @@
-import React, { useRef, useCallback, useContext, useEffect } from "react";
+import React, {
+  useRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { SchedulerContext } from "../context/SchedulerContext";
 import { DEFAULT_CONFIG } from "../constants";
 import type { Appointment, LaneProps } from "../types";
+import {
+  isSlotBlocked,
+  getSlotFromX,
+  isPointOverLane,
+  isValidPosition,
+  getOverlappingAppointments,
+  getEventCoordinates,
+  getReactEventCoordinates,
+  hasInvalidOverlapWithTargets,
+} from "../utils/laneUtils";
+import { mergeClassNames } from "../utils/classNameUtils";
 
 export const Lane: React.FC<LaneProps> = ({
   laneId,
@@ -14,83 +31,26 @@ export const Lane: React.FC<LaneProps> = ({
   onSlotDoubleClick,
   onSlotClick,
   onAppointmentChange,
+  appointmentContainerClassName,
+  appointmentResizerStartClassName,
+  appointmentResizerEndClassName,
+  appointmentResizerStartInnerClassName,
+  appointmentResizerEndInnerClassName,
 }) => {
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
+  const finalConfig = useMemo(
+    () => ({ ...DEFAULT_CONFIG, ...config }),
+    [config]
+  );
   const laneRef = useRef<HTMLDivElement>(null);
   const { dragState, setDragState, resizeState, setResizeState } =
     useContext(SchedulerContext) || {};
-
-  const isSlotBlocked = useCallback(
-    (slot: number) => {
-      return blockedSlots.includes(slot);
-    },
-    [blockedSlots]
-  );
-
-  const getSlotFromX = useCallback(
-    (x: number) => {
-      const rect = laneRef.current?.getBoundingClientRect();
-      if (!rect) return null;
-      const relativeX = x - rect.left;
-      const slot = Math.max(0, Math.floor(relativeX / finalConfig.slotWidth));
-      return slot < totalSlots ? slot : null;
-    },
-    [finalConfig.slotWidth, totalSlots]
-  );
-
-  const isPointOverLane = useCallback((x: number, y: number) => {
-    const rect = laneRef.current?.getBoundingClientRect();
-    if (!rect) return false;
-    return (
-      x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
-    );
-  }, []);
-
-  const isValidPosition = useCallback(
-    (
-      startSlot: number,
-      duration: number,
-      appointmentId: string,
-      appointmentData: Appointment | null = null
-    ) => {
-      if (startSlot < 0 || startSlot + duration > totalSlots) return false;
-
-      const apt =
-        appointmentData || appointments.find((a) => a.id === appointmentId);
-
-      for (let i = startSlot; i < startSlot + duration; i++) {
-        if (isSlotBlocked(i)) {
-          if (apt?.onBlockedSlot) {
-            if (!apt.onBlockedSlot(i, laneId)) return false;
-          } else {
-            return false;
-          }
-        }
-      }
-      return true;
-    },
-    [totalSlots, isSlotBlocked, appointments, laneId]
-  );
-
-  const getOverlappingAppointments = useCallback(
-    (startSlot: number, duration: number, excludeId: string) => {
-      return appointments.filter((apt) => {
-        if (apt.id === excludeId) return false;
-        const aptEnd = apt.startSlot + apt.duration;
-        const newEnd = startSlot + duration;
-        return !(aptEnd <= startSlot || apt.startSlot >= newEnd);
-      });
-    },
-    [appointments]
-  );
 
   const handleDragStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent, appointment: Appointment) => {
       if (appointment.locked || !setDragState) return;
 
       e.stopPropagation();
-      const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const startY = "touches" in e ? e.touches[0].clientY : e.clientY;
+      const { x: startX, y: startY } = getReactEventCoordinates(e);
 
       const rect = laneRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -98,6 +58,9 @@ export const Lane: React.FC<LaneProps> = ({
       const appointmentLeft =
         appointment.startSlot * finalConfig.slotWidth + rect.left;
       const offsetX = startX - appointmentLeft;
+
+      // Set cursor to grabbing during drag
+      document.documentElement.classList.add("cursor-grabbing");
 
       setDragState({
         appointmentId: appointment.id,
@@ -119,29 +82,46 @@ export const Lane: React.FC<LaneProps> = ({
 
   const handleDragOver = useCallback(
     (x: number, y: number) => {
+      const rect = laneRef.current?.getBoundingClientRect();
+
       if (
         !dragState ||
         !setDragState ||
-        (dragState.sourceLaneId === laneId && !isPointOverLane(x, y))
+        (dragState.sourceLaneId === laneId && !isPointOverLane(x, y, rect))
       ) {
         return;
       }
 
-      if (isPointOverLane(x, y)) {
+      if (isPointOverLane(x, y, rect)) {
         const adjustedX = x - (dragState.offsetX || 0);
-        const slot = getSlotFromX(adjustedX);
+        const slot = getSlotFromX(
+          adjustedX,
+          rect,
+          finalConfig.slotWidth,
+          totalSlots
+        );
 
         if (slot !== null) {
           const apt = dragState.appointment;
           const overlaps = getOverlappingAppointments(
             slot,
             apt.duration,
-            apt.id
+            apt.id,
+            appointments
           );
-          const hasInvalidOverlap = overlaps.some(() => !apt.allowOverlap);
+          const invalidOverlap = hasInvalidOverlapWithTargets(overlaps);
           const isValid =
-            !hasInvalidOverlap &&
-            isValidPosition(slot, apt.duration, apt.id, apt);
+            !invalidOverlap &&
+            isValidPosition(
+              slot,
+              apt.duration,
+              apt.id,
+              totalSlots,
+              blockedSlots,
+              appointments,
+              laneId,
+              apt
+            );
 
           setDragState((prev) =>
             prev
@@ -171,29 +151,37 @@ export const Lane: React.FC<LaneProps> = ({
     [
       dragState,
       laneId,
-      isPointOverLane,
-      getSlotFromX,
-      getOverlappingAppointments,
-      isValidPosition,
+      finalConfig.slotWidth,
+      totalSlots,
+      blockedSlots,
+      appointments,
       setDragState,
     ]
   );
 
   useEffect(() => {
-    if (!dragState) return;
+    if (!dragState) {
+      // Reset cursor when drag ends
+      document.documentElement.classList.remove("cursor-grabbing");
+      return;
+    }
+
+    const controller = new AbortController();
+    const { signal } = controller;
 
     const handleMove = (e: MouseEvent | TouchEvent) => {
-      const x = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const y = "touches" in e ? e.touches[0].clientY : e.clientY;
+      const { x, y } = getEventCoordinates(e);
       handleDragOver(x, y);
     };
 
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("mousemove", handleMove, { signal });
+    window.addEventListener("touchmove", handleMove, {
+      passive: false,
+      signal,
+    });
 
     return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("touchmove", handleMove);
+      controller.abort();
     };
   }, [dragState, handleDragOver]);
 
@@ -206,7 +194,10 @@ export const Lane: React.FC<LaneProps> = ({
       if (appointment.locked || !setResizeState) return;
 
       e.stopPropagation();
-      const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const { x: startX } = getReactEventCoordinates(e);
+
+      // Set cursor on document during resize
+      document.documentElement.classList.add("cursor-ew-resize");
 
       setResizeState({
         appointmentId: appointment.id,
@@ -227,7 +218,7 @@ export const Lane: React.FC<LaneProps> = ({
       if (!resizeState || !setResizeState || resizeState.laneId !== laneId)
         return;
 
-      const currentX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const { x: currentX } = getEventCoordinates(e);
       const deltaX = currentX - resizeState.startX;
       const deltaSlots = Math.round(deltaX / finalConfig.slotWidth);
 
@@ -249,13 +240,22 @@ export const Lane: React.FC<LaneProps> = ({
       const overlaps = getOverlappingAppointments(
         newStartSlot,
         newDuration,
-        apt.id
+        apt.id,
+        appointments
       );
-      const hasInvalidOverlap = overlaps.some(() => !apt.allowOverlap);
+      const invalidOverlap = hasInvalidOverlapWithTargets(overlaps);
 
       if (
-        !hasInvalidOverlap &&
-        isValidPosition(newStartSlot, newDuration, apt.id)
+        !invalidOverlap &&
+        isValidPosition(
+          newStartSlot,
+          newDuration,
+          apt.id,
+          totalSlots,
+          blockedSlots,
+          appointments,
+          laneId
+        )
       ) {
         setResizeState((prev) =>
           prev
@@ -272,9 +272,9 @@ export const Lane: React.FC<LaneProps> = ({
       resizeState,
       laneId,
       finalConfig.slotWidth,
+      totalSlots,
+      blockedSlots,
       appointments,
-      getOverlappingAppointments,
-      isValidPosition,
       setResizeState,
     ]
   );
@@ -298,133 +298,233 @@ export const Lane: React.FC<LaneProps> = ({
       });
     }
 
+    // Reset cursor after resize
+    document.documentElement.classList.remove("cursor-ew-resize");
+
     setResizeState(null);
   }, [resizeState, laneId, appointments, onAppointmentChange, setResizeState]);
 
   useEffect(() => {
     if (resizeState && resizeState.laneId === laneId) {
+      const controller = new AbortController();
+      const { signal } = controller;
+
       const handleMove = (e: MouseEvent | TouchEvent) => handleResizeMove(e);
       const handleEnd = () => handleResizeEnd();
 
-      window.addEventListener("mousemove", handleMove);
-      window.addEventListener("mouseup", handleEnd);
-      window.addEventListener("touchmove", handleMove);
-      window.addEventListener("touchend", handleEnd);
+      window.addEventListener("mousemove", handleMove, { signal });
+      window.addEventListener("mouseup", handleEnd, { signal });
+      window.addEventListener("touchmove", handleMove, { signal });
+      window.addEventListener("touchend", handleEnd, { signal });
 
       return () => {
-        window.removeEventListener("mousemove", handleMove);
-        window.removeEventListener("mouseup", handleEnd);
-        window.removeEventListener("touchmove", handleMove);
-        window.removeEventListener("touchend", handleEnd);
+        controller.abort();
       };
     }
   }, [resizeState, laneId, handleResizeMove, handleResizeEnd]);
 
-  const renderAppointment = (appointment: Appointment) => {
-    const isDraggingThis =
-      dragState?.appointmentId === appointment.id &&
-      dragState?.sourceLaneId === laneId;
-    const isShowingPreview =
-      dragState?.appointmentId === appointment.id &&
-      dragState?.targetLaneId === laneId;
-    const isResizing =
-      resizeState?.appointmentId === appointment.id &&
-      resizeState?.laneId === laneId;
+  const renderAppointment = useCallback(
+    (appointment: Appointment) => {
+      const isDraggingThis =
+        dragState?.appointmentId === appointment.id &&
+        dragState?.sourceLaneId === laneId;
+      const isShowingPreview =
+        dragState?.appointmentId === appointment.id &&
+        dragState?.targetLaneId === laneId;
+      const isResizing =
+        resizeState?.appointmentId === appointment.id &&
+        resizeState?.laneId === laneId;
 
-    let startSlot = appointment.startSlot;
-    let duration = appointment.duration;
-    let opacity = 1;
+      let startSlot = appointment.startSlot;
+      let duration = appointment.duration;
+      let opacity = 1;
 
-    if (isDraggingThis) {
-      opacity = 0.3;
-    }
+      if (isDraggingThis) {
+        opacity = 0.3;
+      }
 
-    if (isShowingPreview && dragState.targetLaneId === laneId) {
-      startSlot = dragState.currentStartSlot;
-      opacity = dragState.isOverValidLane ? 0.7 : 0.3;
-    } else if (isResizing) {
-      startSlot = resizeState.currentStartSlot;
-      duration = resizeState.currentDuration;
-      opacity = 0.7;
-    }
+      if (isShowingPreview && dragState?.targetLaneId === laneId) {
+        startSlot = dragState.currentStartSlot;
+        opacity = dragState.isOverValidLane ? 0.7 : 0.3;
+      } else if (isResizing) {
+        startSlot = resizeState!.currentStartSlot;
+        duration = resizeState!.currentDuration;
+        opacity = 0.7;
+      }
 
-    const left = startSlot * finalConfig.slotWidth;
-    const width = duration * finalConfig.slotWidth;
+      const left = startSlot * finalConfig.slotWidth;
+      const width = duration * finalConfig.slotWidth;
 
-    if (
-      isShowingPreview &&
-      dragState.sourceLaneId !== laneId &&
-      dragState.targetLaneId !== laneId
-    ) {
-      return null;
-    }
+      if (
+        isShowingPreview &&
+        dragState?.sourceLaneId !== laneId &&
+        dragState?.targetLaneId !== laneId
+      ) {
+        return null;
+      }
 
-    return (
-      <div
-        key={appointment.id}
-        className="absolute top-0"
-        style={{
-          left: `${left}px`,
-          width: `${width}px`,
-          height: `${finalConfig.height}px`,
-          opacity: opacity,
-          transition: isDraggingThis || isResizing ? "none" : "all 0.2s ease",
-          touchAction: "none",
-          zIndex: isDraggingThis ? 1000 : 1,
-        }}
-      >
+      const appointmentContainerClasses = mergeClassNames(
+        "absolute top-0 shadow-md",
+        appointmentContainerClassName
+      );
+
+      return (
         <div
-          className={`h-full ${
-            dragState?.isOverValidLane === false && isShowingPreview
-              ? "bg-red-500"
-              : "bg-blue-500"
-          } text-white rounded shadow-md flex items-center justify-center relative overflow-hidden ${
-            appointment.locked ? "cursor-not-allowed" : "cursor-move"
-          }`}
+          key={appointment.id}
+          className={appointmentContainerClasses}
+          style={{
+            left: `${left}px`,
+            width: `${width}px`,
+            height: `${finalConfig.height}px`,
+            opacity: opacity,
+            transition: isDraggingThis || isResizing ? "none" : "all 0.2s ease",
+            touchAction: "none",
+            zIndex: isDraggingThis ? 1000 : 1,
+            borderRadius: "8px",
+            overflow: "hidden",
+            cursor: !appointment.locked ? "grab" : "default",
+          }}
           onMouseDown={(e) => handleDragStart(e, appointment)}
           onTouchStart={(e) => handleDragStart(e, appointment)}
         >
+          {/* Custom content rendered by parent or default */}
+          <div className="relative h-full w-full">
+            {renderAppointmentContent ? (
+              renderAppointmentContent(appointment)
+            ) : (
+              <div className="h-full bg-blue-500 text-black rounded shadow-md flex items-center justify-center relative overflow-hidden">
+                <div className="px-2 text-sm truncate pointer-events-none">
+                  {appointment.title || `Apt ${appointment.id}`}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Resizers at the edges */}
           {!appointment.locked && (
             <>
               <div
-                className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-700 z-10"
-                onMouseDown={(e) => handleResizeStart(e, appointment, "start")}
-                onTouchStart={(e) => handleResizeStart(e, appointment, "start")}
-              />
+                className={mergeClassNames(
+                  "absolute left-0 cursor-ew-resize z-10 flex items-center justify-center",
+                  appointmentResizerStartClassName
+                )}
+                style={{
+                  width: "10px",
+                  left: "4px",
+                  top: "15%",
+                  height: "70%",
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  handleResizeStart(e, appointment, "start");
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  handleResizeStart(e, appointment, "start");
+                }}
+              >
+                <div
+                  className={mergeClassNames(
+                    "w-0.5 h-full bg-white rounded-sm",
+                    appointmentResizerStartInnerClassName
+                  )}
+                  style={{
+                    filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))",
+                  }}
+                />
+              </div>
               <div
-                className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-700 z-10"
-                onMouseDown={(e) => handleResizeStart(e, appointment, "end")}
-                onTouchStart={(e) => handleResizeStart(e, appointment, "end")}
-              />
+                className={mergeClassNames(
+                  "absolute right-0 cursor-ew-resize z-10 flex items-center justify-center",
+                  appointmentResizerEndClassName
+                )}
+                style={{
+                  width: "10px",
+                  right: "4px",
+                  top: "15%",
+                  height: "70%",
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  handleResizeStart(e, appointment, "end");
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  handleResizeStart(e, appointment, "end");
+                }}
+              >
+                <div
+                  className={mergeClassNames(
+                    "w-0.5 h-full bg-white rounded-sm",
+                    appointmentResizerEndInnerClassName
+                  )}
+                  style={{
+                    filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))",
+                  }}
+                />
+              </div>
             </>
           )}
-
-          <div className="px-2 text-sm truncate pointer-events-none">
-            {renderAppointmentContent
-              ? renderAppointmentContent(appointment)
-              : appointment.title || `Apt ${appointment.id}`}
-          </div>
-
-          {appointment.locked && (
-            <div className="absolute top-1 right-1">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-          )}
         </div>
-      </div>
-    );
-  };
+      );
+    },
+    [
+      dragState,
+      resizeState,
+      laneId,
+      finalConfig,
+      renderAppointmentContent,
+      handleDragStart,
+      handleResizeStart,
+      appointmentContainerClassName,
+      appointmentResizerStartClassName,
+      appointmentResizerEndClassName,
+      appointmentResizerStartInnerClassName,
+      appointmentResizerEndInnerClassName,
+    ]
+  );
 
   const showPreviewFromOtherLane =
     dragState &&
     dragState.sourceLaneId !== laneId &&
     dragState.targetLaneId === laneId;
+
+  const slotElements = useMemo(() => {
+    return Array.from({ length: totalSlots }).map((_, idx) => {
+      const isBlocked = isSlotBlocked(idx, blockedSlots);
+
+      return (
+        <div
+          key={idx}
+          className="absolute top-0 bottom-0 border-r"
+          style={{
+            left: `${idx * finalConfig.slotWidth}px`,
+            width: `${finalConfig.slotWidth}px`,
+            backgroundColor: isBlocked ? "#fee2e2" : finalConfig.slotColor,
+            borderColor: finalConfig.slotBorderColor,
+          }}
+          onClick={() => onSlotClick?.(idx, laneId)}
+          onDoubleClick={() => onSlotDoubleClick?.(idx, laneId)}
+        >
+          {renderSlot ? (
+            renderSlot(idx, isBlocked)
+          ) : (
+            <div className="flex items-center justify-center h-full text-xs text-gray-400">
+              {idx}
+            </div>
+          )}
+        </div>
+      );
+    });
+  }, [
+    totalSlots,
+    blockedSlots,
+    finalConfig,
+    renderSlot,
+    onSlotClick,
+    onSlotDoubleClick,
+    laneId,
+  ]);
 
   return (
     <div
@@ -435,32 +535,7 @@ export const Lane: React.FC<LaneProps> = ({
         width: `${totalSlots * finalConfig.slotWidth}px`,
       }}
     >
-      {Array.from({ length: totalSlots }).map((_, idx) => {
-        const isBlocked = isSlotBlocked(idx);
-
-        return (
-          <div
-            key={idx}
-            className="absolute top-0 bottom-0 border-r"
-            style={{
-              left: `${idx * finalConfig.slotWidth}px`,
-              width: `${finalConfig.slotWidth}px`,
-              backgroundColor: isBlocked ? "#fee2e2" : finalConfig.slotColor,
-              borderColor: finalConfig.slotBorderColor,
-            }}
-            onClick={() => onSlotClick?.(idx, laneId)}
-            onDoubleClick={() => onSlotDoubleClick?.(idx, laneId)}
-          >
-            {renderSlot ? (
-              renderSlot(idx, isBlocked)
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">
-                {idx}
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {slotElements}
 
       {appointments.map(renderAppointment)}
 
@@ -475,20 +550,19 @@ export const Lane: React.FC<LaneProps> = ({
             height: `${finalConfig.height}px`,
             opacity: dragState.isOverValidLane ? 0.7 : 0.3,
             zIndex: 999,
+            pointerEvents: "none",
           }}
         >
-          <div
-            className={`h-full ${
-              dragState.isOverValidLane ? "bg-blue-500" : "bg-red-500"
-            } text-white rounded shadow-md flex items-center justify-center`}
-          >
-            <div className="px-2 text-sm truncate pointer-events-none">
-              {renderAppointmentContent
-                ? renderAppointmentContent(dragState.appointment)
-                : dragState.appointment.title ||
+          {renderAppointmentContent ? (
+            renderAppointmentContent(dragState.appointment)
+          ) : (
+            <div className="h-full bg-blue-500 text-white rounded shadow-md flex items-center justify-center relative overflow-hidden">
+              <div className="px-2 text-sm truncate pointer-events-none">
+                {dragState.appointment.title ||
                   `Apt ${dragState.appointment.id}`}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

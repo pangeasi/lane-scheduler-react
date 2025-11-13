@@ -330,7 +330,10 @@ export const CustomAppointmentContent: Story = {
     renderAppointmentContent: (appointment: Appointment) => {
       const extAppt = appointment as ExtendedAppointment;
       return (
-        <div style={{ padding: "8px", height: "100%", overflow: "hidden" }}>
+        <div
+          className="bg-amber-200 px-4 opacity-80"
+          style={{ height: "100%", overflow: "hidden" }}
+        >
           <div
             style={{
               fontWeight: "bold",
@@ -395,6 +398,8 @@ export const Mobile: Story = {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          color: "white",
+          backgroundColor: "#247885",
         }}
       >
         {appointment.title}
