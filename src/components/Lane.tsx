@@ -92,11 +92,22 @@ export const Lane: React.FC<LaneProps> = ({
       const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
       const startY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
+      // Calcular el offset del cursor dentro del appointment
+      const rect = laneRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const appointmentLeft =
+        appointment.startSlot * finalConfig.slotWidth + rect.left;
+      const offsetX = startX - appointmentLeft;
+
       setDragState({
         appointmentId: appointment.id,
         appointment: appointment,
         startX,
         startY,
+        currentX: startX,
+        currentY: startY,
+        offsetX, // Guardar el offset para usarlo en handleDragOver
         originalStartSlot: appointment.startSlot,
         currentStartSlot: appointment.startSlot,
         sourceLaneId: laneId,
@@ -104,7 +115,7 @@ export const Lane: React.FC<LaneProps> = ({
         isOverValidLane: true,
       });
     },
-    [laneId, setDragState]
+    [laneId, setDragState, finalConfig.slotWidth]
   );
 
   const handleDragOver = useCallback(
@@ -118,7 +129,10 @@ export const Lane: React.FC<LaneProps> = ({
       }
 
       if (isPointOverLane(x, y)) {
-        const slot = getSlotFromX(x);
+        // Ajustar la posición x con el offset del cursor
+        const adjustedX = x - (dragState.offsetX || 0);
+        const slot = getSlotFromX(adjustedX);
+
         if (slot !== null) {
           const apt = dragState.appointment;
           const overlaps = getOverlappingAppointments(
@@ -135,6 +149,8 @@ export const Lane: React.FC<LaneProps> = ({
             prev
               ? {
                   ...prev,
+                  currentX: x,
+                  currentY: y,
                   currentStartSlot: slot,
                   targetLaneId: laneId,
                   isOverValidLane: isValid,
@@ -142,6 +158,17 @@ export const Lane: React.FC<LaneProps> = ({
               : null
           );
         }
+      } else {
+        // Actualizar posición del cursor incluso fuera del lane
+        setDragState((prev) =>
+          prev
+            ? {
+                ...prev,
+                currentX: x,
+                currentY: y,
+              }
+            : null
+        );
       }
     },
     [

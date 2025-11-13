@@ -26,6 +26,7 @@ export interface LaneProps {
   totalSlots?: number;
   renderSlot?: (slotIndex: number, isBlocked: boolean) => ReactNode;
   renderAppointmentContent?: (appointment: Appointment) => ReactNode;
+  renderDragPreviewContent?: (appointment: Appointment) => ReactNode;
   config?: LaneConfig;
   onSlotDoubleClick?: (slotIndex: number, laneId: string) => void;
   onSlotClick?: (slotIndex: number, laneId: string) => void;
@@ -44,6 +45,9 @@ export interface DragState {
   appointment: Appointment;
   startX: number;
   startY: number;
+  currentX: number;
+  currentY: number;
+  offsetX?: number;
   originalStartSlot: number;
   currentStartSlot: number;
   sourceLaneId: string;

@@ -444,3 +444,45 @@ export const SingleLane: Story = {
     },
   },
 };
+
+export const MultipleLanesConsecutive: Story = {
+  name: "Multiple Lanes Consecutive",
+  render: () => (
+    <Scheduler onAppointmentMove={action("onAppointmentMove")}>
+      <div>
+        {[1, 2, 3, 4].map((num) => (
+          <div key={num}>
+            <Lane
+              laneId={`lane-${num}`}
+              appointments={[
+                {
+                  id: `${num}-1`,
+                  startSlot: 4 + num * 2,
+                  duration: 4,
+                  title: `Appointment ${num}-1`,
+                },
+                {
+                  id: `${num}-2`,
+                  startSlot: 12 + num,
+                  duration: 6,
+                  title: `Appointment ${num}-2`,
+                },
+              ]}
+              blockedSlots={[0, 1, 22, 23]}
+              totalSlots={24}
+              config={{ height: 80, slotWidth: 50 }}
+            />
+          </div>
+        ))}
+      </div>
+    </Scheduler>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "A scheduler with multiple consecutive lanes. Appointments can be dragged between any of the lanes.",
+      },
+    },
+  },
+};
