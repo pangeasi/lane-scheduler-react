@@ -4,6 +4,7 @@ import { Scheduler } from "../src/components/Scheduler";
 import { Lane } from "../src/components/Lane";
 import type { Appointment } from "../src/types";
 import { defaultSampleAppointments } from "./story-constants";
+import { validateNewAppointment } from "../src/utils/appointmentValidation";
 
 // Props interface for the stateful wrapper
 export interface StatefulLaneWrapperProps {
@@ -123,6 +124,16 @@ export const StatefulLaneWrapper: React.FC<StatefulLaneWrapperProps> = ({
       allowOverlap: false,
     };
     console.log("➕ Adding new appointment:", newAppointment);
+    const { valid, error } = validateNewAppointment(newAppointment, {
+      appointments,
+      blockedSlots,
+      totalSlots,
+      laneId,
+    });
+    if (!valid) {
+      console.error("❌ Cannot add appointment:", error);
+      return;
+    }
     setAppointments((prev) => {
       const updated = [...prev, newAppointment];
       console.log("📋 All appointments after add:", updated);
