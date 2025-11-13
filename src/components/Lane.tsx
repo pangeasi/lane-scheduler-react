@@ -347,7 +347,7 @@ export const Lane: React.FC<LaneProps> = ({
       return (
         <div
           key={appointment.id}
-          className="absolute top-0"
+          className="absolute top-0 shadow-md"
           style={{
             left: `${left}px`,
             width: `${width}px`,
@@ -356,60 +356,78 @@ export const Lane: React.FC<LaneProps> = ({
             transition: isDraggingThis || isResizing ? "none" : "all 0.2s ease",
             touchAction: "none",
             zIndex: isDraggingThis ? 1000 : 1,
+            borderRadius: "8px",
+            overflow: "hidden",
           }}
+          onMouseDown={(e) => handleDragStart(e, appointment)}
+          onTouchStart={(e) => handleDragStart(e, appointment)}
         >
-          <div
-            className={`h-full ${
-              dragState?.isOverValidLane === false && isShowingPreview
-                ? "bg-red-500"
-                : "bg-blue-500"
-            } text-white rounded shadow-md flex items-center justify-center relative overflow-hidden ${
-              appointment.locked ? "cursor-not-allowed" : "cursor-move"
-            }`}
-            onMouseDown={(e) => handleDragStart(e, appointment)}
-            onTouchStart={(e) => handleDragStart(e, appointment)}
-          >
-            {!appointment.locked && (
-              <>
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-700 z-10"
-                  onMouseDown={(e) =>
-                    handleResizeStart(e, appointment, "start")
-                  }
-                  onTouchStart={(e) =>
-                    handleResizeStart(e, appointment, "start")
-                  }
-                />
-                <div
-                  className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-700 z-10"
-                  onMouseDown={(e) => handleResizeStart(e, appointment, "end")}
-                  onTouchStart={(e) => handleResizeStart(e, appointment, "end")}
-                />
-              </>
-            )}
-
-            <div className="px-2 text-sm truncate pointer-events-none">
-              {renderAppointmentContent
-                ? renderAppointmentContent(appointment)
-                : appointment.title || `Apt ${appointment.id}`}
-            </div>
-
-            {appointment.locked && (
-              <div className="absolute top-1 right-1">
-                <svg
-                  className="w-3 h-3"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+          {/* Custom content rendered by parent or default */}
+          <div className="relative h-full w-full">
+            {renderAppointmentContent ? (
+              renderAppointmentContent(appointment)
+            ) : (
+              <div className="h-full bg-blue-500 text-black rounded shadow-md flex items-center justify-center cursor-move relative overflow-hidden">
+                <div className="px-2 text-sm truncate pointer-events-none">
+                  {appointment.title || `Apt ${appointment.id}`}
+                </div>
               </div>
             )}
           </div>
+
+          {/* Resizers at the edges */}
+          {!appointment.locked && (
+            <>
+              <div
+                className="absolute left-0 cursor-ew-resize z-10 flex items-center justify-center"
+                style={{
+                  width: "10px",
+                  left: "4px",
+                  top: "15%",
+                  height: "70%",
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  handleResizeStart(e, appointment, "start");
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  handleResizeStart(e, appointment, "start");
+                }}
+              >
+                <div
+                  className="w-0.5 h-full bg-white rounded-sm"
+                  style={{
+                    filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))",
+                  }}
+                />
+              </div>
+              <div
+                className="absolute right-0 cursor-ew-resize z-10 flex items-center justify-center"
+                style={{
+                  width: "10px",
+                  right: "4px",
+                  top: "15%",
+                  height: "70%",
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  handleResizeStart(e, appointment, "end");
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  handleResizeStart(e, appointment, "end");
+                }}
+              >
+                <div
+                  className="w-0.5 h-full bg-white rounded-sm"
+                  style={{
+                    filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))",
+                  }}
+                />
+              </div>
+            </>
+          )}
         </div>
       );
     },
@@ -490,20 +508,19 @@ export const Lane: React.FC<LaneProps> = ({
             height: `${finalConfig.height}px`,
             opacity: dragState.isOverValidLane ? 0.7 : 0.3,
             zIndex: 999,
+            pointerEvents: "none",
           }}
         >
-          <div
-            className={`h-full ${
-              dragState.isOverValidLane ? "bg-blue-500" : "bg-red-500"
-            } text-white rounded shadow-md flex items-center justify-center`}
-          >
-            <div className="px-2 text-sm truncate pointer-events-none">
-              {renderAppointmentContent
-                ? renderAppointmentContent(dragState.appointment)
-                : dragState.appointment.title ||
+          {renderAppointmentContent ? (
+            renderAppointmentContent(dragState.appointment)
+          ) : (
+            <div className="h-full bg-blue-500 text-white rounded shadow-md flex items-center justify-center relative overflow-hidden">
+              <div className="px-2 text-sm truncate pointer-events-none">
+                {dragState.appointment.title ||
                   `Apt ${dragState.appointment.id}`}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
