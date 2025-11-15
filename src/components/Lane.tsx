@@ -390,7 +390,7 @@ export const Lane: React.FC<LaneProps> = ({
           {/* Custom content rendered by parent or default */}
           <div className="relative h-full w-full">
             {renderAppointmentContent ? (
-              renderAppointmentContent(appointment)
+              renderAppointmentContent(appointment, startSlot, duration)
             ) : (
               <div className="h-full bg-blue-500 text-black rounded shadow-md flex items-center justify-center relative overflow-hidden">
                 <div className="px-2 text-sm truncate pointer-events-none">
@@ -554,7 +554,11 @@ export const Lane: React.FC<LaneProps> = ({
           }}
         >
           {renderAppointmentContent ? (
-            renderAppointmentContent(dragState.appointment)
+            renderAppointmentContent(
+              dragState.appointment,
+              dragState.currentStartSlot,
+              dragState.appointment.duration
+            )
           ) : (
             <div className="h-full bg-blue-500 text-white rounded shadow-md flex items-center justify-center relative overflow-hidden">
               <div className="px-2 text-sm truncate pointer-events-none">

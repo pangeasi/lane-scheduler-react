@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2] Unreleased
+
+### Changed
+
+- **Enhanced `renderAppointmentContent` with real-time values**: The `renderAppointmentContent` callback now receives `currentStartSlot` and `currentDuration` as additional parameters, allowing custom rendering to display updated values during drag and resize operations
+  - **Signature**: `renderAppointmentContent(appointment, currentStartSlot, currentDuration)`
+  - **Benefit**: Enables showing time/position information that updates in real-time as the user drags or resizes appointments
+
 ## [1.1.1] - 14-11-2025
 
 ### Breaking Changes
