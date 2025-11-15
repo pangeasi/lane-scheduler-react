@@ -17,7 +17,11 @@ export interface StatefulLaneWrapperProps {
     slotWidth?: number;
   };
   renderSlot?: (slotIndex: number, isBlocked: boolean) => React.ReactNode;
-  renderAppointmentContent?: (appointment: Appointment) => React.ReactNode;
+  renderAppointmentContent?: (
+    appointment: Appointment,
+    currentStartSlot: number,
+    currentDuration: number
+  ) => React.ReactNode;
   showControls?: boolean;
   showDebugInfo?: boolean;
   onAppointmentMoveOverwrite?: (
@@ -29,7 +33,11 @@ export interface StatefulLaneWrapperProps {
   children?: React.ReactNode;
 }
 
-const renderAppointmentContentDefault = (appointment: Appointment) => (
+const renderAppointmentContentDefault = (
+  appointment: Appointment,
+  currentStartSlot: number,
+  currentDuration: number
+) => (
   <div
     className={`bg-blue-400 text-white h-full px-4 truncate ${
       appointment.locked ? "cursor-not-allowed" : "cursor-grab"
@@ -37,9 +45,7 @@ const renderAppointmentContentDefault = (appointment: Appointment) => (
   >
     {appointment.title}
     <br />
-    {`(${appointment.startSlot} - ${
-      appointment.startSlot + appointment.duration
-    })`}
+    {`(${currentStartSlot} - ${currentStartSlot + currentDuration})`}
 
     {appointment.locked && (
       <div className="absolute top-0 right-0">

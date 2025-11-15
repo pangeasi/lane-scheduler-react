@@ -25,7 +25,11 @@ export interface LaneProps {
   blockedSlots?: number[];
   totalSlots?: number;
   renderSlot?: (slotIndex: number, isBlocked: boolean) => ReactNode;
-  renderAppointmentContent?: (appointment: Appointment) => ReactNode;
+  renderAppointmentContent?: (
+    appointment: Appointment,
+    currentStartSlot: number,
+    currentDuration: number
+  ) => ReactNode;
   renderDragPreviewContent?: (appointment: Appointment) => ReactNode;
   config?: LaneConfig;
   onSlotDoubleClick?: (slotIndex: number, laneId: string) => void;
