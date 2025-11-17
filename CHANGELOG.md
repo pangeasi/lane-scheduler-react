@@ -1,6 +1,16 @@
 # Changelog
 
-## [1.1.2] Unreleased
+## [1.1.3] - 17-11-2025
+
+### Added
+
+- **Slot context menu handler**: New `onContextMenu(slotIndex, laneId)` prop on `Lane` to handle right-click/long-press across slots; native context menu is suppressed when provided
+
+### Documentation
+
+- Documented `onContextMenu` usage in README and Introduction, including Storybook knobs/actions
+
+## [1.1.2] 15-11-2025
 
 ### Changed
 

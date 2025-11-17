@@ -30,6 +30,7 @@ export const Lane: React.FC<LaneProps> = ({
   config = {},
   onSlotDoubleClick,
   onSlotClick,
+  onContextMenu,
   onAppointmentChange,
   appointmentContainerClassName,
   appointmentResizerStartClassName,
@@ -505,6 +506,12 @@ export const Lane: React.FC<LaneProps> = ({
           }}
           onClick={() => onSlotClick?.(idx, laneId)}
           onDoubleClick={() => onSlotDoubleClick?.(idx, laneId)}
+          onContextMenu={(event) => {
+            if (!onContextMenu) return;
+
+            event.preventDefault();
+            onContextMenu(idx, laneId);
+          }}
         >
           {renderSlot ? (
             renderSlot(idx, isBlocked)
@@ -523,6 +530,7 @@ export const Lane: React.FC<LaneProps> = ({
     renderSlot,
     onSlotClick,
     onSlotDoubleClick,
+    onContextMenu,
     laneId,
   ]);
 
