@@ -34,6 +34,7 @@ export interface LaneProps {
   config?: LaneConfig;
   onSlotDoubleClick?: (slotIndex: number, laneId: string) => void;
   onSlotClick?: (slotIndex: number, laneId: string) => void;
+  onContextMenu?: (slotIndex: number, laneId: string) => void;
   onAppointmentChange?: (appointment: Appointment) => void;
   // Validación de citas
   onValidationError?: (error: ValidationResult) => void;
