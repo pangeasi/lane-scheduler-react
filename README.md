@@ -85,8 +85,10 @@ function App() {
 | `config`                          | `LaneConfig`    | `{}`     | Visual configuration                              |
 | `renderSlot`                      | `function`      | -        | Custom slot renderer                              |
 | `renderAppointmentContent`        | `function`      | -        | Custom appointment content                        |
+| `onSlotClick`                     | `function`      | -        | Slot click handler                                |
 | `onSlotDoubleClick`               | `function`      | -        | Slot double-click handler                         |
 | `onAppointmentChange`             | `function`      | -        | Appointment change handler                        |
+| `onContextMenu`                   | `function`      | -        | Slot right-click/long-press handler (default menu suppressed) |
 | `appointmentContainerClassName`      | `string`        | -        | Custom className for appointment container           |
 | `appointmentResizerStartClassName`  | `string`        | -        | Custom className for start-edge resizer outer       |
 | `appointmentResizerEndClassName`    | `string`        | -        | Custom className for end-edge resizer outer         |
@@ -133,6 +135,18 @@ function App() {
 ```
 
 **Note**: The library doesn't impose any unit interpretation. You define what each slot represents through your custom rendering logic.
+
+### Slot Interactions
+
+Use the slot event handlers to trigger creation flows, detail drawers, or custom context menus. The native context menu is suppressed when `onContextMenu` is provided.
+
+```tsx
+<Lane
+  onSlotClick={(slotIdx, laneId) => openDetails(slotIdx, laneId)}
+  onSlotDoubleClick={(slotIdx, laneId) => createAppointment(slotIdx, laneId)}
+  onContextMenu={(slotIdx, laneId) => showContextMenu(slotIdx, laneId)}
+/>
+```
 
 ### Blocking Overlaps with allowOverlap
 

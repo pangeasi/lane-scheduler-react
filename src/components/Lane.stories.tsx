@@ -84,6 +84,9 @@ The Lane component should be wrapped in a Scheduler component to enable drag & d
     onSlotClick: {
       description: "Callback when a slot is clicked",
     },
+    onContextMenu: {
+      description: "Callback when a slot receives a context menu event",
+    },
     onAppointmentChange: {
       description: "Callback when an appointment is modified",
     },
@@ -99,6 +102,7 @@ The Lane component should be wrapped in a Scheduler component to enable drag & d
     },
     onSlotDoubleClick: action("onSlotDoubleClick"),
     onSlotClick: action("onSlotClick"),
+    onContextMenu: action("onContextMenu"),
     onAppointmentChange: action("onAppointmentChange"),
   },
 };

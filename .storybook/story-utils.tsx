@@ -24,6 +24,7 @@ export interface StatefulLaneWrapperProps {
   ) => React.ReactNode;
   showControls?: boolean;
   showDebugInfo?: boolean;
+  onContextMenu?: (slotIndex: number, laneId: string) => void;
   onAppointmentMoveOverwrite?: (
     appointment: Appointment,
     sourceLaneId: string,
@@ -88,6 +89,7 @@ export const StatefulLaneWrapper: React.FC<StatefulLaneWrapperProps> = ({
   showControls = true,
   showDebugInfo = true,
   onAppointmentMoveOverwrite,
+  onContextMenu,
   children,
 }) => {
   const [appointments, setAppointments] =
@@ -182,6 +184,14 @@ export const StatefulLaneWrapper: React.FC<StatefulLaneWrapperProps> = ({
 
   const handleSlotClick = (slotIndex: number, laneId: string) => {
     action("onSlotClick")(slotIndex, laneId);
+  };
+
+  const handleSlotContextMenu = (slotIndex: number, laneId: string) => {
+    if (onContextMenu) {
+      action("onContextMenu")(slotIndex, laneId);
+      onContextMenu(slotIndex, laneId);
+      return;
+    }
   };
 
   // Control button handlers
@@ -305,6 +315,7 @@ export const StatefulLaneWrapper: React.FC<StatefulLaneWrapperProps> = ({
             onSlotDoubleClick={handleSlotDoubleClick}
             onSlotClick={handleSlotClick}
             onAppointmentChange={handleAppointmentChange}
+            onContextMenu={handleSlotContextMenu}
             renderSlot={renderSlot}
             renderAppointmentContent={renderAppointmentContent}
           />
