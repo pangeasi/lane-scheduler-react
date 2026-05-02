@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Swap collision strategy**: Added opt-in `collisionStrategy="swap"` on `Scheduler` to exchange appointments when dropping over a non-overlappable appointment.
+- **Move details payload**: `onAppointmentMove` now receives a fifth `details` argument describing whether the operation is a normal move or a swap.
+- **Storybook example**: Added a controlled "Swap Appointments" story covering same-lane swaps, cross-lane swaps, locked appointment rejection, and blocked-origin rejection.
+
 ## [1.1.3] - 17-11-2025
 
 ### Added

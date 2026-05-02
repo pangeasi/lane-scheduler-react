@@ -53,6 +53,19 @@ export interface SchedulerContextType {
   setDragState: React.Dispatch<React.SetStateAction<DragState | null>>;
   resizeState: ResizeState | null;
   setResizeState: React.Dispatch<React.SetStateAction<ResizeState | null>>;
+  collisionStrategy: CollisionStrategy;
+  lanes: Record<string, RegisteredLane>;
+  registerLane: (lane: RegisteredLane) => void;
+  unregisterLane: (laneId: string) => void;
+}
+
+export type CollisionStrategy = "reject" | "swap";
+
+export interface RegisteredLane {
+  laneId: string;
+  appointments: Appointment[];
+  blockedSlots: number[];
+  totalSlots: number;
 }
 
 export interface DragState {
@@ -68,6 +81,8 @@ export interface DragState {
   sourceLaneId: string;
   targetLaneId: string;
   isOverValidLane: boolean;
+  moveDetails?: AppointmentMoveDetails;
+  swapPreview?: AppointmentSwapPreview;
 }
 
 export interface ResizeState {
@@ -87,12 +102,31 @@ export interface ValidationResult {
   conflictingAppointments?: Appointment[];
 }
 
+export interface AppointmentSwapPreview {
+  appointment: Appointment;
+  laneId: string;
+  startSlot: number;
+}
+
+export interface AppointmentMoveDetails {
+  operation: "move" | "swap";
+  appointment: Appointment;
+  sourceLaneId: string;
+  targetLaneId: string;
+  newStartSlot: number;
+  swappedAppointment?: Appointment;
+  swappedAppointmentNewLaneId?: string;
+  swappedAppointmentNewStartSlot?: number;
+}
+
 export interface SchedulerProps {
   children: ReactNode;
+  collisionStrategy?: CollisionStrategy;
   onAppointmentMove?: (
     appointment: Appointment,
     sourceLaneId: string,
     targetLaneId: string,
-    newStartSlot: number
+    newStartSlot: number,
+    details: AppointmentMoveDetails
   ) => void;
 }

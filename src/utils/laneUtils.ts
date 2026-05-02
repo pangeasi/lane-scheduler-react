@@ -1,4 +1,9 @@
-import type { Appointment } from "../types";
+import type {
+  Appointment,
+  AppointmentMoveDetails,
+  CollisionStrategy,
+  RegisteredLane,
+} from "../types";
 
 /**
  * Checks if a slot is blocked
@@ -109,6 +114,189 @@ export const hasInvalidOverlapWithTargets = (
   // Check if ALL overlapping appointments allow overlap
   // If any one doesn't allow overlap, it's invalid
   return overlaps.some((apt) => !apt.allowOverlap);
+};
+
+export interface ResolvedAppointmentMove {
+  valid: boolean;
+  details?: AppointmentMoveDetails;
+}
+
+export interface ResolveAppointmentMoveOptions {
+  appointment: Appointment;
+  sourceLaneId: string;
+  targetLaneId: string;
+  newStartSlot: number;
+  originalStartSlot: number;
+  collisionStrategy: CollisionStrategy;
+  lanes: Record<string, RegisteredLane>;
+}
+
+const withoutAppointments = (
+  appointments: Appointment[],
+  appointmentIds: string[]
+) => {
+  const excluded = new Set(appointmentIds);
+  return appointments.filter((appointment) => !excluded.has(appointment.id));
+};
+
+const canPlaceAppointment = (
+  appointment: Appointment,
+  lane: RegisteredLane,
+  startSlot: number,
+  appointments: Appointment[]
+) => {
+  if (
+    !isValidPosition(
+      startSlot,
+      appointment.duration,
+      appointment.id,
+      lane.totalSlots,
+      lane.blockedSlots,
+      appointments,
+      lane.laneId,
+      appointment
+    )
+  ) {
+    return false;
+  }
+
+  const overlaps = getOverlappingAppointments(
+    startSlot,
+    appointment.duration,
+    appointment.id,
+    appointments
+  );
+
+  return !hasInvalidOverlapWithTargets(overlaps);
+};
+
+const getSameLaneSwapCandidateStartSlots = (
+  draggedStartSlot: number,
+  originalStartSlot: number,
+  draggedDuration: number,
+  swappedDuration: number
+) => {
+  const adjacentStartSlot =
+    originalStartSlot > draggedStartSlot
+      ? draggedStartSlot + draggedDuration
+      : draggedStartSlot - swappedDuration;
+
+  return Array.from(new Set([originalStartSlot, adjacentStartSlot]));
+};
+
+export const resolveAppointmentMove = ({
+  appointment,
+  sourceLaneId,
+  targetLaneId,
+  newStartSlot,
+  originalStartSlot,
+  collisionStrategy,
+  lanes,
+}: ResolveAppointmentMoveOptions): ResolvedAppointmentMove => {
+  const sourceLane = lanes[sourceLaneId];
+  const targetLane = lanes[targetLaneId];
+
+  if (!sourceLane || !targetLane) return { valid: false };
+
+  const targetAppointments = withoutAppointments(targetLane.appointments, [
+    appointment.id,
+  ]);
+  const targetOverlaps = getOverlappingAppointments(
+    newStartSlot,
+    appointment.duration,
+    appointment.id,
+    targetAppointments
+  );
+  const invalidTargetOverlaps = targetOverlaps.filter(
+    (targetAppointment) => !targetAppointment.allowOverlap
+  );
+  const canMoveWithoutSwap =
+    invalidTargetOverlaps.length === 0 &&
+    canPlaceAppointment(
+      appointment,
+      targetLane,
+      newStartSlot,
+      targetAppointments
+    );
+
+  if (canMoveWithoutSwap) {
+    return {
+      valid: true,
+      details: {
+        operation: "move",
+        appointment,
+        sourceLaneId,
+        targetLaneId,
+        newStartSlot,
+      },
+    };
+  }
+
+  if (collisionStrategy !== "swap" || invalidTargetOverlaps.length !== 1) {
+    return { valid: false };
+  }
+
+  const swappedAppointment = invalidTargetOverlaps[0];
+  if (swappedAppointment.locked) return { valid: false };
+
+  const targetAppointmentsAfterSwap = withoutAppointments(
+    targetLane.appointments,
+    [appointment.id, swappedAppointment.id]
+  );
+  const sourceAppointmentsAfterSwap = withoutAppointments(
+    sourceLane.appointments,
+    [appointment.id, swappedAppointment.id]
+  );
+  const movedAppointment = { ...appointment, startSlot: newStartSlot };
+  const isSameLaneSwap = sourceLaneId === targetLaneId;
+  const draggingAppointmentCanMove = canPlaceAppointment(
+    appointment,
+    targetLane,
+    newStartSlot,
+    targetAppointmentsAfterSwap
+  );
+
+  const swappedAppointmentNewStartSlot = isSameLaneSwap
+    ? getSameLaneSwapCandidateStartSlots(
+        newStartSlot,
+        originalStartSlot,
+        appointment.duration,
+        swappedAppointment.duration
+      ).find((candidateStartSlot) =>
+        canPlaceAppointment(
+          swappedAppointment,
+          sourceLane,
+          candidateStartSlot,
+          [...sourceAppointmentsAfterSwap, movedAppointment]
+        )
+      )
+    : originalStartSlot;
+  const swappedAppointmentCanMove =
+    swappedAppointmentNewStartSlot !== undefined &&
+    canPlaceAppointment(
+      swappedAppointment,
+      sourceLane,
+      swappedAppointmentNewStartSlot,
+      sourceAppointmentsAfterSwap
+    );
+
+  if (!draggingAppointmentCanMove || !swappedAppointmentCanMove) {
+    return { valid: false };
+  }
+
+  return {
+    valid: true,
+    details: {
+      operation: "swap",
+      appointment,
+      sourceLaneId,
+      targetLaneId,
+      newStartSlot,
+      swappedAppointment,
+      swappedAppointmentNewLaneId: sourceLaneId,
+      swappedAppointmentNewStartSlot,
+    },
+  };
 };
 
 /**

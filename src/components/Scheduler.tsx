@@ -1,13 +1,36 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { SchedulerContext } from "../context/SchedulerContext";
-import type { SchedulerProps, DragState, ResizeState } from "../types";
+import type {
+  SchedulerProps,
+  DragState,
+  ResizeState,
+  RegisteredLane,
+} from "../types";
+import { resolveAppointmentMove } from "../utils/laneUtils";
 
 export const Scheduler: React.FC<SchedulerProps> = ({
   children,
+  collisionStrategy = "reject",
   onAppointmentMove,
 }) => {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
+  const [lanes, setLanes] = useState<Record<string, RegisteredLane>>({});
+
+  const registerLane = useCallback((lane: RegisteredLane) => {
+    setLanes((prev) => ({
+      ...prev,
+      [lane.laneId]: lane,
+    }));
+  }, []);
+
+  const unregisterLane = useCallback((laneId: string) => {
+    setLanes((prev) => {
+      const next = { ...prev };
+      delete next[laneId];
+      return next;
+    });
+  }, []);
 
   const handleDragEnd = useCallback(() => {
     if (!dragState) return;
@@ -17,11 +40,23 @@ export const Scheduler: React.FC<SchedulerProps> = ({
       sourceLaneId,
       targetLaneId,
       currentStartSlot,
-      isOverValidLane,
+      moveDetails,
+      originalStartSlot,
     } = dragState;
+    const resolvedMove = resolveAppointmentMove({
+      appointment,
+      sourceLaneId,
+      targetLaneId,
+      newStartSlot: currentStartSlot,
+      originalStartSlot,
+      collisionStrategy,
+      lanes,
+    });
+    const finalMoveDetails = resolvedMove.details || moveDetails;
 
     if (
-      isOverValidLane &&
+      resolvedMove.valid &&
+      finalMoveDetails &&
       (sourceLaneId !== targetLaneId ||
         currentStartSlot !== appointment.startSlot)
     ) {
@@ -29,12 +64,13 @@ export const Scheduler: React.FC<SchedulerProps> = ({
         appointment,
         sourceLaneId,
         targetLaneId,
-        currentStartSlot
+        currentStartSlot,
+        finalMoveDetails
       );
     }
 
     setDragState(null);
-  }, [dragState, onAppointmentMove]);
+  }, [dragState, collisionStrategy, lanes, onAppointmentMove]);
 
   useEffect(() => {
     if (dragState) {
@@ -48,9 +84,30 @@ export const Scheduler: React.FC<SchedulerProps> = ({
     }
   }, [dragState, handleDragEnd]);
 
+  const contextValue = useMemo(
+    () => ({
+      dragState,
+      setDragState,
+      resizeState,
+      setResizeState,
+      collisionStrategy,
+      lanes,
+      registerLane,
+      unregisterLane,
+    }),
+    [
+      dragState,
+      resizeState,
+      collisionStrategy,
+      lanes,
+      registerLane,
+      unregisterLane,
+    ]
+  );
+
   return (
     <SchedulerContext.Provider
-      value={{ dragState, setDragState, resizeState, setResizeState }}
+      value={contextValue}
     >
       {children}
     </SchedulerContext.Provider>

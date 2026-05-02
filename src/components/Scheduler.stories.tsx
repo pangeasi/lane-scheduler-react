@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 import { Scheduler } from "./Scheduler";
 import { Lane } from "./Lane";
-import type { Appointment } from "../types";
+import type { Appointment, AppointmentMoveDetails } from "../types";
 import { action } from "storybook/actions";
 
 // Sample data for multi-lane scenarios
@@ -76,6 +76,88 @@ const initialLanes: LaneData[] = [
       },
     ],
     blockedSlots: [2, 3, 20, 21],
+  },
+];
+
+const swapStoryInitialLanes: LaneData[] = [
+  {
+    id: "swap-room-a",
+    name: "Room A - Standard",
+    appointments: [
+      {
+        id: "swap-a-focus",
+        startSlot: 2,
+        duration: 3,
+        title: "Focus Block",
+        allowOverlap: false,
+      },
+      {
+        id: "swap-a-sync",
+        startSlot: 7,
+        duration: 2,
+        title: "Team Sync",
+        allowOverlap: false,
+      },
+      {
+        id: "swap-a-locked",
+        startSlot: 12,
+        duration: 3,
+        title: "Locked Hold",
+        locked: true,
+        allowOverlap: false,
+      },
+    ],
+    blockedSlots: [0, 1, 18, 19],
+  },
+  {
+    id: "swap-room-b",
+    name: "Room B - Blocked Origin",
+    appointments: [
+      {
+        id: "swap-b-vip",
+        startSlot: 2,
+        duration: 2,
+        title: "VIP Override",
+        allowOverlap: false,
+        onBlockedSlot: () => true,
+      },
+      {
+        id: "swap-b-review",
+        startSlot: 5,
+        duration: 3,
+        title: "Design Review",
+        allowOverlap: false,
+      },
+      {
+        id: "swap-b-client",
+        startSlot: 14,
+        duration: 2,
+        title: "Client Call",
+        allowOverlap: false,
+      },
+    ],
+    blockedSlots: [2, 10, 11],
+  },
+  {
+    id: "swap-room-c",
+    name: "Room C - Unequal Duration Guard",
+    appointments: [
+      {
+        id: "swap-c-client",
+        startSlot: 3,
+        duration: 2,
+        title: "Client Call",
+        allowOverlap: false,
+      },
+      {
+        id: "swap-c-review",
+        startSlot: 5,
+        duration: 3,
+        title: "Design Review",
+        allowOverlap: false,
+      },
+    ],
+    blockedSlots: [],
   },
 ];
 
@@ -296,6 +378,215 @@ const InteractiveScheduler = () => {
   );
 };
 
+const SwapAppointmentsScheduler = () => {
+  const [lanes, setLanes] = useState<LaneData[]>(swapStoryInitialLanes);
+
+  const handleAppointmentMove = (
+    appointment: Appointment,
+    sourceLaneId: string,
+    targetLaneId: string,
+    newStartSlot: number,
+    details: AppointmentMoveDetails
+  ) => {
+    action("onAppointmentMove")(
+      appointment,
+      sourceLaneId,
+      targetLaneId,
+      newStartSlot,
+      details
+    );
+
+    setLanes((prev) => {
+      const movingAppointment = { ...appointment, startSlot: newStartSlot };
+
+      if (details.operation === "swap" && details.swappedAppointment) {
+        const swappedAppointment = {
+          ...details.swappedAppointment,
+          startSlot: details.swappedAppointmentNewStartSlot!,
+        };
+
+        return prev.map((lane) => {
+          let nextAppointments = lane.appointments.filter(
+            (apt) =>
+              apt.id !== appointment.id &&
+              apt.id !== details.swappedAppointment?.id
+          );
+
+          if (lane.id === targetLaneId) {
+            nextAppointments = [...nextAppointments, movingAppointment];
+          }
+
+          if (lane.id === details.swappedAppointmentNewLaneId) {
+            nextAppointments = [...nextAppointments, swappedAppointment];
+          }
+
+          return {
+            ...lane,
+            appointments: nextAppointments.sort(
+              (a, b) => a.startSlot - b.startSlot
+            ),
+          };
+        });
+      }
+
+      if (sourceLaneId === targetLaneId) {
+        return prev.map((lane) =>
+          lane.id === sourceLaneId
+            ? {
+                ...lane,
+                appointments: lane.appointments.map((apt) =>
+                  apt.id === appointment.id ? movingAppointment : apt
+                ),
+              }
+            : lane
+        );
+      }
+
+      return prev.map((lane) => {
+        if (lane.id === sourceLaneId) {
+          return {
+            ...lane,
+            appointments: lane.appointments.filter(
+              (apt) => apt.id !== appointment.id
+            ),
+          };
+        }
+
+        if (lane.id === targetLaneId) {
+          return {
+            ...lane,
+            appointments: [...lane.appointments, movingAppointment].sort(
+              (a, b) => a.startSlot - b.startSlot
+            ),
+          };
+        }
+
+        return lane;
+      });
+    });
+  };
+
+  const renderSwapAppointment = (
+    appointment: Appointment,
+    currentStartSlot: number,
+    currentDuration: number
+  ) => {
+    const isLocked = appointment.locked;
+
+    return (
+      <div
+        data-testid={`swap-appointment-${appointment.id}`}
+        style={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: "2px",
+          padding: "0 12px",
+          color: "#111827",
+          background: isLocked ? "#fca5a5" : "#93c5fd",
+          border: isLocked ? "2px solid #b91c1c" : "2px solid #2563eb",
+          borderRadius: "8px",
+          boxSizing: "border-box",
+          fontSize: "12px",
+          fontWeight: 700,
+          lineHeight: 1.15,
+        }}
+      >
+        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {appointment.title}
+        </span>
+        <span style={{ fontSize: "11px", fontWeight: 600 }}>
+          {currentStartSlot} - {currentStartSlot + currentDuration}
+        </span>
+      </div>
+    );
+  };
+
+  const renderSwapSlot = (slotIdx: number, isBlocked: boolean) => (
+    <div
+      style={{
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: isBlocked ? "#991b1b" : "#4b5563",
+        backgroundColor: isBlocked ? "#fee2e2" : "#ffffff",
+        fontSize: "11px",
+        fontWeight: isBlocked ? 700 : 500,
+      }}
+    >
+      {slotIdx}
+    </div>
+  );
+
+  return (
+    <div
+      style={{
+        padding: "20px",
+        backgroundColor: "#f8f9fa",
+        minHeight: "100vh",
+      }}
+    >
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <h1
+          style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "8px" }}
+        >
+          Swap Appointments
+        </h1>
+        <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+          Drop an appointment over another non-overlapping appointment to swap
+          their positions. Locked appointments and blocked origin slots reject
+          the swap.
+        </p>
+
+        <Scheduler
+          collisionStrategy="swap"
+          onAppointmentMove={handleAppointmentMove}
+        >
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+          >
+            {lanes.map((lane) => (
+              <div
+                key={lane.id}
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderRadius: "8px",
+                  padding: "16px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "600",
+                    marginBottom: "12px",
+                  }}
+                >
+                  {lane.name}
+                </h3>
+                <Lane
+                  laneId={lane.id}
+                  appointments={lane.appointments}
+                  blockedSlots={lane.blockedSlots}
+                  totalSlots={20}
+                  config={{
+                    height: 76,
+                    slotWidth: 58,
+                  }}
+                  renderSlot={renderSwapSlot}
+                  renderAppointmentContent={renderSwapAppointment}
+                />
+              </div>
+            ))}
+          </div>
+        </Scheduler>
+      </div>
+    </div>
+  );
+};
+
 const meta: Meta<typeof Scheduler> = {
   title: "Components/Scheduler",
   component: Scheduler,
@@ -324,6 +615,12 @@ to handle appointments being moved between lanes.
     onAppointmentMove: {
       description: "Callback when an appointment is moved between lanes",
     },
+    collisionStrategy: {
+      description:
+        "Controls whether invalid appointment collisions are rejected or can swap appointments",
+      control: "select",
+      options: ["reject", "swap"],
+    },
   },
 };
 
@@ -339,6 +636,19 @@ export const MultiLane: Story = {
       description: {
         story:
           "A fully interactive scheduler with multiple lanes. Try dragging appointments between different rooms, resizing them, and creating new ones by double-clicking empty slots.",
+      },
+    },
+  },
+};
+
+export const SwapAppointments: Story = {
+  name: "Swap Appointments",
+  render: () => <SwapAppointmentsScheduler />,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "A controlled scheduler using collisionStrategy='swap'. Drag Focus Block over Team Sync for a same-lane swap, or over Design Review for a cross-lane swap. Dropping onto Locked Hold or dragging VIP Override onto Focus Block is rejected.",
       },
     },
   },

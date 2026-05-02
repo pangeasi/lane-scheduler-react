@@ -9,6 +9,7 @@ A flexible, drag-and-drop scheduler component library for React with full TypeSc
 Lane Scheduler React provides a powerful and flexible scheduling interface that allows users to:
 
 - **Drag & Drop** appointments within and between lanes
+- **Swap** appointments with opt-in collision handling
 - **Resize** appointments by dragging their edges
 - **Block** specific time slots
 - **Lock** appointments to prevent modification
@@ -80,6 +81,13 @@ Appointments are the schedulable items that can be moved and resized. They have 
 - Appointments with `allowOverlap: false` (default) block all overlaps
 - Visual feedback: green preview when overlap is allowed, red when blocked
 - Any appointment trying to overlap must check ALL target appointments - all must allow it
+
+### 🔁 Swap Collisions
+
+- `Scheduler` supports `collisionStrategy="swap"` for opt-in appointment exchanges
+- Swaps work within the same lane and between lanes
+- The displaced appointment moves to the dragged appointment's original lane and start slot
+- Invalid swaps are rejected when locked appointments, blocked slots, bounds, or other overlaps prevent the full exchange
 
 ### 📱 Mobile Support
 

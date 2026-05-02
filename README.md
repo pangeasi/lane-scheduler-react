@@ -73,6 +73,22 @@ function App() {
 | ------------------- | ----------- | ------------------------------- |
 | `children`          | `ReactNode` | Lane components                 |
 | `onAppointmentMove` | `function`  | Callback when appointment moves |
+| `collisionStrategy` | `"reject" \| "swap"` | Defaults to `"reject"`. Use `"swap"` to exchange appointments when a dragged appointment is dropped over a non-overlappable appointment |
+
+`onAppointmentMove` receives a fifth `details` argument when you need to handle swaps:
+
+```ts
+type AppointmentMoveDetails = {
+  operation: "move" | "swap";
+  appointment: Appointment;
+  sourceLaneId: string;
+  targetLaneId: string;
+  newStartSlot: number;
+  swappedAppointment?: Appointment;
+  swappedAppointmentNewLaneId?: string;
+  swappedAppointmentNewStartSlot?: number;
+};
+```
 
 ### Lane
 
@@ -176,6 +192,30 @@ const strictAppointment = {
 // - If they try to overlap with an appointment where allowOverlap: false,
 //   the drop/resize is rejected and shown in red
 ```
+
+### Swapping Appointments
+
+Set `collisionStrategy="swap"` on `Scheduler` to exchange two appointments instead of rejecting a drop over a non-overlappable appointment.
+
+```tsx
+<Scheduler
+  collisionStrategy="swap"
+  onAppointmentMove={(appointment, sourceLaneId, targetLaneId, newStartSlot, details) => {
+    if (details.operation === "swap") {
+      // Move appointment to targetLaneId/newStartSlot and move
+      // details.swappedAppointment to details.swappedAppointmentNewLaneId.
+      return;
+    }
+
+    // Existing move behavior
+  }}
+>
+  <Lane laneId="room-1" appointments={roomOneAppointments} />
+  <Lane laneId="room-2" appointments={roomTwoAppointments} />
+</Scheduler>
+```
+
+Swaps are atomic. If the displaced appointment cannot be placed in the dragged appointment's original lane and start slot because of `locked`, blocked slots, bounds, or other invalid overlaps, the drop is rejected.
 
 ### Blocked Slots with Custom Logic
 

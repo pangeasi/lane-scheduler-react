@@ -8,6 +8,9 @@ export type {
   LaneProps,
   SchedulerProps,
   ValidationResult,
+  CollisionStrategy,
+  AppointmentMoveDetails,
+  AppointmentSwapPreview,
 } from "./types";
 export { DEFAULT_CONFIG } from "./constants";
 export { SchedulerContext } from "./context";

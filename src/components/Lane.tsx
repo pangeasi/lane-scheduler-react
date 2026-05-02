@@ -17,6 +17,7 @@ import {
   getEventCoordinates,
   getReactEventCoordinates,
   hasInvalidOverlapWithTargets,
+  resolveAppointmentMove,
 } from "../utils/laneUtils";
 import { mergeClassNames } from "../utils/classNameUtils";
 
@@ -43,8 +44,37 @@ export const Lane: React.FC<LaneProps> = ({
     [config]
   );
   const laneRef = useRef<HTMLDivElement>(null);
-  const { dragState, setDragState, resizeState, setResizeState } =
-    useContext(SchedulerContext) || {};
+  const schedulerContext = useContext(SchedulerContext);
+  const {
+    dragState,
+    setDragState,
+    resizeState,
+    setResizeState,
+    collisionStrategy = "reject",
+    lanes = {},
+    registerLane,
+    unregisterLane,
+  } = schedulerContext || {};
+
+  useEffect(() => {
+    registerLane?.({
+      laneId,
+      appointments,
+      blockedSlots,
+      totalSlots,
+    });
+
+    return () => {
+      unregisterLane?.(laneId);
+    };
+  }, [
+    laneId,
+    appointments,
+    blockedSlots,
+    totalSlots,
+    registerLane,
+    unregisterLane,
+  ]);
 
   const handleDragStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent, appointment: Appointment) => {
@@ -104,25 +134,15 @@ export const Lane: React.FC<LaneProps> = ({
 
         if (slot !== null) {
           const apt = dragState.appointment;
-          const overlaps = getOverlappingAppointments(
-            slot,
-            apt.duration,
-            apt.id,
-            appointments
-          );
-          const invalidOverlap = hasInvalidOverlapWithTargets(overlaps);
-          const isValid =
-            !invalidOverlap &&
-            isValidPosition(
-              slot,
-              apt.duration,
-              apt.id,
-              totalSlots,
-              blockedSlots,
-              appointments,
-              laneId,
-              apt
-            );
+          const moveResult = resolveAppointmentMove({
+            appointment: apt,
+            sourceLaneId: dragState.sourceLaneId,
+            targetLaneId: laneId,
+            newStartSlot: slot,
+            originalStartSlot: dragState.originalStartSlot,
+            collisionStrategy,
+            lanes,
+          });
 
           setDragState((prev) =>
             prev
@@ -132,7 +152,23 @@ export const Lane: React.FC<LaneProps> = ({
                   currentY: y,
                   currentStartSlot: slot,
                   targetLaneId: laneId,
-                  isOverValidLane: isValid,
+                  isOverValidLane: moveResult.valid,
+                  moveDetails: moveResult.details,
+                  swapPreview:
+                    moveResult.details?.operation === "swap" &&
+                    moveResult.details.swappedAppointment &&
+                    moveResult.details.swappedAppointmentNewLaneId !==
+                      undefined &&
+                    moveResult.details.swappedAppointmentNewStartSlot !==
+                      undefined
+                      ? {
+                          appointment: moveResult.details.swappedAppointment,
+                          laneId:
+                            moveResult.details.swappedAppointmentNewLaneId,
+                          startSlot:
+                            moveResult.details.swappedAppointmentNewStartSlot,
+                        }
+                      : undefined,
                 }
               : null
           );
@@ -144,6 +180,8 @@ export const Lane: React.FC<LaneProps> = ({
                 ...prev,
                 currentX: x,
                 currentY: y,
+                moveDetails: undefined,
+                swapPreview: undefined,
               }
             : null
         );
@@ -154,9 +192,9 @@ export const Lane: React.FC<LaneProps> = ({
       laneId,
       finalConfig.slotWidth,
       totalSlots,
-      blockedSlots,
-      appointments,
       setDragState,
+      collisionStrategy,
+      lanes,
     ]
   );
 
@@ -335,6 +373,8 @@ export const Lane: React.FC<LaneProps> = ({
       const isResizing =
         resizeState?.appointmentId === appointment.id &&
         resizeState?.laneId === laneId;
+      const isSwapPreviewAppointment =
+        dragState?.swapPreview?.appointment.id === appointment.id;
 
       let startSlot = appointment.startSlot;
       let duration = appointment.duration;
@@ -347,6 +387,14 @@ export const Lane: React.FC<LaneProps> = ({
       if (isShowingPreview && dragState?.targetLaneId === laneId) {
         startSlot = dragState.currentStartSlot;
         opacity = dragState.isOverValidLane ? 0.7 : 0.3;
+      } else if (
+        isSwapPreviewAppointment &&
+        dragState?.swapPreview?.laneId === laneId
+      ) {
+        startSlot = dragState.swapPreview.startSlot;
+        opacity = dragState.isOverValidLane ? 0.7 : 0.3;
+      } else if (isSwapPreviewAppointment) {
+        opacity = 0.3;
       } else if (isResizing) {
         startSlot = resizeState!.currentStartSlot;
         duration = resizeState!.currentDuration;
@@ -372,6 +420,7 @@ export const Lane: React.FC<LaneProps> = ({
       return (
         <div
           key={appointment.id}
+          data-appointment-id={appointment.id}
           className={appointmentContainerClasses}
           style={{
             left: `${left}px`,
@@ -489,6 +538,12 @@ export const Lane: React.FC<LaneProps> = ({
     dragState &&
     dragState.sourceLaneId !== laneId &&
     dragState.targetLaneId === laneId;
+  const showSwapPreviewFromOtherLane =
+    dragState?.swapPreview &&
+    dragState.swapPreview.laneId === laneId &&
+    !appointments.some(
+      (appointment) => appointment.id === dragState.swapPreview?.appointment.id
+    );
 
   const slotElements = useMemo(() => {
     return Array.from({ length: totalSlots }).map((_, idx) => {
@@ -572,6 +627,38 @@ export const Lane: React.FC<LaneProps> = ({
               <div className="px-2 text-sm truncate pointer-events-none">
                 {dragState.appointment.title ||
                   `Apt ${dragState.appointment.id}`}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showSwapPreviewFromOtherLane && dragState?.swapPreview && (
+        <div
+          className="absolute top-0"
+          style={{
+            left: `${dragState.swapPreview.startSlot * finalConfig.slotWidth}px`,
+            width: `${
+              dragState.swapPreview.appointment.duration *
+              finalConfig.slotWidth
+            }px`,
+            height: `${finalConfig.height}px`,
+            opacity: dragState.isOverValidLane ? 0.7 : 0.3,
+            zIndex: 998,
+            pointerEvents: "none",
+          }}
+        >
+          {renderAppointmentContent ? (
+            renderAppointmentContent(
+              dragState.swapPreview.appointment,
+              dragState.swapPreview.startSlot,
+              dragState.swapPreview.appointment.duration
+            )
+          ) : (
+            <div className="h-full bg-blue-500 text-white rounded shadow-md flex items-center justify-center relative overflow-hidden">
+              <div className="px-2 text-sm truncate pointer-events-none">
+                {dragState.swapPreview.appointment.title ||
+                  `Apt ${dragState.swapPreview.appointment.id}`}
               </div>
             </div>
           )}

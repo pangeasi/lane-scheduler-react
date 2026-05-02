@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const storybookPort = process.env.STORYBOOK_PORT ?? "6006";
+const storybookUrl =
+  process.env.STORYBOOK_URL ?? `http://localhost:${storybookPort}`;
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -42,8 +46,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "npm run storybook",
-    url: "http://localhost:6006",
+    command: `npx storybook dev -p ${storybookPort}`,
+    url: storybookUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
