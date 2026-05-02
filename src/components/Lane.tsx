@@ -41,7 +41,7 @@ export const Lane: React.FC<LaneProps> = ({
 }) => {
   const finalConfig = useMemo(
     () => ({ ...DEFAULT_CONFIG, ...config }),
-    [config]
+    [config],
   );
   const laneRef = useRef<HTMLDivElement>(null);
   const schedulerContext = useContext(SchedulerContext);
@@ -108,28 +108,26 @@ export const Lane: React.FC<LaneProps> = ({
         isOverValidLane: true,
       });
     },
-    [laneId, setDragState, finalConfig.slotWidth]
+    [laneId, setDragState, finalConfig.slotWidth],
   );
 
   const handleDragOver = useCallback(
     (x: number, y: number) => {
       const rect = laneRef.current?.getBoundingClientRect();
 
-      if (
-        !dragState ||
-        !setDragState ||
-        (dragState.sourceLaneId === laneId && !isPointOverLane(x, y, rect))
-      ) {
+      if (!dragState || !setDragState || !rect) {
         return;
       }
 
-      if (isPointOverLane(x, y, rect)) {
+      const isOverThisLane = isPointOverLane(x, y, rect);
+
+      if (isOverThisLane) {
         const adjustedX = x - (dragState.offsetX || 0);
         const slot = getSlotFromX(
           adjustedX,
           rect,
           finalConfig.slotWidth,
-          totalSlots
+          totalSlots,
         );
 
         if (slot !== null) {
@@ -170,12 +168,12 @@ export const Lane: React.FC<LaneProps> = ({
                         }
                       : undefined,
                 }
-              : null
+              : null,
           );
         }
       } else {
         setDragState((prev) =>
-          prev
+          prev?.targetLaneId === laneId
             ? {
                 ...prev,
                 currentX: x,
@@ -183,7 +181,7 @@ export const Lane: React.FC<LaneProps> = ({
                 moveDetails: undefined,
                 swapPreview: undefined,
               }
-            : null
+            : prev,
         );
       }
     },
@@ -195,7 +193,7 @@ export const Lane: React.FC<LaneProps> = ({
       setDragState,
       collisionStrategy,
       lanes,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -228,7 +226,7 @@ export const Lane: React.FC<LaneProps> = ({
     (
       e: React.MouseEvent | React.TouchEvent,
       appointment: Appointment,
-      edge: "start" | "end"
+      edge: "start" | "end",
     ) => {
       if (appointment.locked || !setResizeState) return;
 
@@ -249,7 +247,7 @@ export const Lane: React.FC<LaneProps> = ({
         currentDuration: appointment.duration,
       });
     },
-    [laneId, setResizeState]
+    [laneId, setResizeState],
   );
 
   const handleResizeMove = useCallback(
@@ -280,7 +278,7 @@ export const Lane: React.FC<LaneProps> = ({
         newStartSlot,
         newDuration,
         apt.id,
-        appointments
+        appointments,
       );
       const invalidOverlap = hasInvalidOverlapWithTargets(overlaps);
 
@@ -293,7 +291,7 @@ export const Lane: React.FC<LaneProps> = ({
           totalSlots,
           blockedSlots,
           appointments,
-          laneId
+          laneId,
         )
       ) {
         setResizeState((prev) =>
@@ -303,7 +301,7 @@ export const Lane: React.FC<LaneProps> = ({
                 currentStartSlot: newStartSlot,
                 currentDuration: newDuration,
               }
-            : null
+            : null,
         );
       }
     },
@@ -315,7 +313,7 @@ export const Lane: React.FC<LaneProps> = ({
       blockedSlots,
       appointments,
       setResizeState,
-    ]
+    ],
   );
 
   const handleResizeEnd = useCallback(() => {
@@ -414,7 +412,7 @@ export const Lane: React.FC<LaneProps> = ({
 
       const appointmentContainerClasses = mergeClassNames(
         "absolute top-0 shadow-md",
-        appointmentContainerClassName
+        appointmentContainerClassName,
       );
 
       return (
@@ -456,7 +454,7 @@ export const Lane: React.FC<LaneProps> = ({
               <div
                 className={mergeClassNames(
                   "absolute left-0 cursor-ew-resize z-10 flex items-center justify-center",
-                  appointmentResizerStartClassName
+                  appointmentResizerStartClassName,
                 )}
                 style={{
                   width: "10px",
@@ -476,7 +474,7 @@ export const Lane: React.FC<LaneProps> = ({
                 <div
                   className={mergeClassNames(
                     "w-0.5 h-full bg-white rounded-sm",
-                    appointmentResizerStartInnerClassName
+                    appointmentResizerStartInnerClassName,
                   )}
                   style={{
                     filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))",
@@ -486,7 +484,7 @@ export const Lane: React.FC<LaneProps> = ({
               <div
                 className={mergeClassNames(
                   "absolute right-0 cursor-ew-resize z-10 flex items-center justify-center",
-                  appointmentResizerEndClassName
+                  appointmentResizerEndClassName,
                 )}
                 style={{
                   width: "10px",
@@ -506,7 +504,7 @@ export const Lane: React.FC<LaneProps> = ({
                 <div
                   className={mergeClassNames(
                     "w-0.5 h-full bg-white rounded-sm",
-                    appointmentResizerEndInnerClassName
+                    appointmentResizerEndInnerClassName,
                   )}
                   style={{
                     filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))",
@@ -531,7 +529,7 @@ export const Lane: React.FC<LaneProps> = ({
       appointmentResizerEndClassName,
       appointmentResizerStartInnerClassName,
       appointmentResizerEndInnerClassName,
-    ]
+    ],
   );
 
   const showPreviewFromOtherLane =
@@ -542,7 +540,7 @@ export const Lane: React.FC<LaneProps> = ({
     dragState?.swapPreview &&
     dragState.swapPreview.laneId === laneId &&
     !appointments.some(
-      (appointment) => appointment.id === dragState.swapPreview?.appointment.id
+      (appointment) => appointment.id === dragState.swapPreview?.appointment.id,
     );
 
   const slotElements = useMemo(() => {
@@ -620,7 +618,7 @@ export const Lane: React.FC<LaneProps> = ({
             renderAppointmentContent(
               dragState.appointment,
               dragState.currentStartSlot,
-              dragState.appointment.duration
+              dragState.appointment.duration,
             )
           ) : (
             <div className="h-full bg-blue-500 text-white rounded shadow-md flex items-center justify-center relative overflow-hidden">
@@ -639,8 +637,7 @@ export const Lane: React.FC<LaneProps> = ({
           style={{
             left: `${dragState.swapPreview.startSlot * finalConfig.slotWidth}px`,
             width: `${
-              dragState.swapPreview.appointment.duration *
-              finalConfig.slotWidth
+              dragState.swapPreview.appointment.duration * finalConfig.slotWidth
             }px`,
             height: `${finalConfig.height}px`,
             opacity: dragState.isOverValidLane ? 0.7 : 0.3,
@@ -652,7 +649,7 @@ export const Lane: React.FC<LaneProps> = ({
             renderAppointmentContent(
               dragState.swapPreview.appointment,
               dragState.swapPreview.startSlot,
-              dragState.swapPreview.appointment.duration
+              dragState.swapPreview.appointment.duration,
             )
           ) : (
             <div className="h-full bg-blue-500 text-white rounded shadow-md flex items-center justify-center relative overflow-hidden">
