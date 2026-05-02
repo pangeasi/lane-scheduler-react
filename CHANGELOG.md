@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 02-05-2026
+
+### Fixed
+
+- **Move details payload**: `onAppointmentMove` now receives a fifth `details` argument describing whether the operation is a normal move or a swap.
+
 ## [1.2.0] - 02-05-2026
 
 ### Added
